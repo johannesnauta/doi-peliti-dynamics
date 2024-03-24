@@ -64,7 +64,7 @@ function get_stationary()
                 sqrt(2000 + (-500 + 5/16 * (1000 - u + sqrt(1006400 - 2000 * u + u^2)))^2)
         )) / 20000
 
-    g = sqrt(
+    g = 0.5*sqrt(
         1/2 + u/2 +
         ((425 - 3*sqrt(70) + 5*sqrt(7315 - 102*sqrt(70))) * u) / 10800 +
         u^2 / 1000 -
@@ -80,13 +80,13 @@ function get_stationary()
                 500 - 5/16 * (1000 - u + sqrt(1006400 - 2000*u + u^2)) +
                     sqrt(2000 + (-500 + 5/16 * (1000 - u + sqrt(1006400 - 2000*u + u^2)))^2)
             )) / 20000
-    )
+    )^2
 
     dg = expand_derivatives(Du(g))
-    f_fun = eval(build_function(f, u))
-    g_fun = eval(build_function(g, u))
-    dg_fun = eval(build_function(dg, u))
-    return f_fun, g_fun, dg_fun
+    F_fun = eval(build_function(f, u))
+    D_fun = eval(build_function(g, u))
+    dD_fun = eval(build_function(dg, u))
+    return F_fun, D_fun, dD_fun
 end
 
 end # module Plotter

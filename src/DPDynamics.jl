@@ -15,6 +15,3 @@ macro ignore(args...) end
 
 end # module DPDynamics
 #/ End module
-
-
-end # module DPDynamics
