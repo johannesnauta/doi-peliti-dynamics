@@ -13,7 +13,7 @@ function getfield()
     #/ Define Hamiltonian
     @variables η θ
     @variables N γ ρ α
-    H = (1 - exp(θ)) * (N - η) * ( γ*η*exp(-θ) - ρ)
+    H = (1 - exp(θ)) * (N - η) * (α*η*exp(-θ)*(N-η)/N^2 + γ*η*exp(-θ)/N - ρ)
     ∂η = Differential(η)
     ∂θ = Differential(θ)
     dη = expand_derivatives(-∂θ(H))

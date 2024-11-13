@@ -1,0 +1,62 @@
+% arara: lualatex
+
+% arara: lualatex
+\documentclass[tikz,dvipsnames,amsmath,preview]{standalone}
+
+\usepackage{xcolor}
+\definecolor{darkorange}{rgb}{1.0, 0.55, 0.0}
+\usepackage{graphicx}
+\graphicspath{{../SIS/}}
+
+\usetikzlibrary{positioning,arrows.meta,backgrounds}
+
+\begin{document}
+
+\begin{tikzpicture}
+  \node[inner sep=1ex,anchor=south west] (phi1) at (0,0) {%
+    \includegraphics[width=123pt]{SISorderparameter1.pdf}
+  };  
+  \node[anchor=west,inner sep=1ex,xshift=1ex] (phi2) at (phi1.east) {%
+    \includegraphics[width=123pt]{SISorderparameter2.pdf}
+  };
+  %~ draw some squares
+  \begin{scope}[shift={(phi1.south west)}, xscale=1, yscale=1]
+    \node[draw,inner sep=4pt,thick,black] (a1) at (1.7,.8) {};
+    \node[draw,inner sep=4pt,thick,black] (b1) at (2.575,.8) {};
+    \node[draw,inner sep=4pt,thick,black] (c1) at (3.45,1.6) {};
+  \end{scope}
+  %~ draw some squares
+  \begin{scope}[shift={(phi2.south west)}, xscale=1, yscale=1]
+    \node[draw,inner sep=4pt,thick,darkorange] (a2) at (1.7,0.8) {};
+    \node[draw,inner sep=4pt,thick,darkorange] (b2) at (2.575,1.75) {};
+    \node[draw,inner sep=4pt,thick,darkorange] (c2) at (3.45,2.0) {};
+  \end{scope}
+    %~ draw phase plot for 1st order transition
+  \node[anchor=south,inner sep=0pt] (phase1) at (phi1.north) {%
+    \includegraphics[width=123pt]{SISphaseplotfirstorder.pdf}%
+  };
+  
+  %~ draw phase plot for 1st order transition
+  \node[anchor=south,inner sep=0pt] (phase2) at (phi2.north) {%
+    \includegraphics[width=123pt]{SISphaseplotfirstorder.pdf}%
+  };
+  \draw[densely dashed,darkorange] (a2.north west) --
+  ([xshift=4ex,yshift=1.5ex]phase2.south west);
+  \draw[densely dashed,darkorange] (a2.north east) --
+  ([xshift=10ex,yshift=1.5ex]phase2.south west);
+  \draw[densely dashed,darkorange] (b2.north west) --
+  ([xshift=-1.5ex,yshift=1.5ex]phase2.south);
+  \draw[densely dashed,darkorange] (b2.north east) --
+  ([xshift=4.5ex,yshift=1.5ex]phase2.south);
+  \draw[densely dashed,darkorange] (c2.north west) --
+  ([xshift=-7.5ex,yshift=1.5ex]phase2.south east);
+  \draw[densely dashed,darkorange] (c2.north east) --
+  ([xshift=-1ex,yshift=1.5ex]phase2.south east);
+\end{tikzpicture}
+\end{document}
+
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: t
+%%% End:
