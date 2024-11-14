@@ -20,38 +20,43 @@
     \includegraphics[width=123pt]{SISorderparameter2.pdf}
   };
   %~ draw some squares
-  \begin{scope}[shift={(phi1.south west)}, xscale=1, yscale=1]
-    \node[draw,inner sep=4pt,thick,black] (a1) at (1.7,.8) {};
-    \node[draw,inner sep=4pt,thick,black] (b1) at (2.575,.8) {};
-    \node[draw,inner sep=4pt,thick,black] (c1) at (3.45,1.6) {};
+  \begin{scope}[%
+    shift={(phi1.south west)}, xscale=1, yscale=1,
+    every node/.style={draw,inner sep=3pt,black,dashed,dash pattern=on 2pt off 1pt}
+    ]
+    \node (a1) at (1.685,.8) {};
+    \node (b1) at (2.575,.8) {};
+    \node (c1) at (3.45,1.6) {};
   \end{scope}
   %~ draw some squares
-  \begin{scope}[shift={(phi2.south west)}, xscale=1, yscale=1]
-    \node[draw,inner sep=4pt,thick,darkorange] (a2) at (1.7,0.8) {};
-    \node[draw,inner sep=4pt,thick,darkorange] (b2) at (2.575,1.75) {};
-    \node[draw,inner sep=4pt,thick,darkorange] (c2) at (3.45,2.0) {};
+  \begin{scope}[%
+    shift={(phi2.south west)}, xscale=1, yscale=1,
+    every node/.style={draw,inner sep=3pt,black,dashed,dash pattern=on 2pt off 1pt}
+    ]
+    \node (a2) at (1.685,0.8) {};
+    \node (b2) at (2.575,1.75) {};
+    \node (c2) at (3.45,2.0) {};
   \end{scope}
-    %~ draw phase plot for 1st order transition
-  \node[anchor=south,inner sep=0pt] (phase1) at (phi1.north) {%
-    \includegraphics[width=123pt]{SISphaseplotfirstorder.pdf}%
+  %~ draw phase plot for 1st order transition
+  \node[anchor=south east,inner sep=0pt,yshift=-1ex] (phase1) at (phi1.north east) {%
+    \includegraphics[width=130pt]{SISphaseplotsecondorder.pdf}%
   };
   
   %~ draw phase plot for 1st order transition
-  \node[anchor=south,inner sep=0pt] (phase2) at (phi2.north) {%
-    \includegraphics[width=123pt]{SISphaseplotfirstorder.pdf}%
-  };
-  \draw[densely dashed,darkorange] (a2.north west) --
-  ([xshift=4ex,yshift=1.5ex]phase2.south west);
-  \draw[densely dashed,darkorange] (a2.north east) --
-  ([xshift=10ex,yshift=1.5ex]phase2.south west);
-  \draw[densely dashed,darkorange] (b2.north west) --
-  ([xshift=-1.5ex,yshift=1.5ex]phase2.south);
-  \draw[densely dashed,darkorange] (b2.north east) --
-  ([xshift=4.5ex,yshift=1.5ex]phase2.south);
-  \draw[densely dashed,darkorange] (c2.north west) --
-  ([xshift=-7.5ex,yshift=1.5ex]phase2.south east);
-  \draw[densely dashed,darkorange] (c2.north east) --
-  ([xshift=-1ex,yshift=1.5ex]phase2.south east);
+  \node[anchor=south east,inner sep=0pt,yshift=-1ex] (phase2) at (phi2.north east) {%
+    \includegraphics[width=130pt]{SISphaseplotfirstorder.pdf}%
+  };%
+  \begin{scope}[every path/.style={very thin, densely dotted}]
+    \foreach \i in {1,2} {%
+      \draw ({a\i}.north west) -- ([xshift=5ex,yshift=1.5ex]{phase\i}.south west);
+      \draw ({b\i}.north west) -- ([xshift=14ex,yshift=1.5ex]{phase\i}.south west);
+      \draw ({c\i}.north west) -- ([xshift=22.5ex,yshift=1.5ex]{phase\i}.south west);
+
+      \draw ({a\i}.north east) -- ([xshift=11ex,yshift=1.5ex]{phase\i}.south west);
+      \draw ({b\i}.north east) -- ([xshift=19.5ex,yshift=1.5ex]{phase\i}.south west);    
+      \draw ({c\i}.north east) -- ([xshift=28ex,yshift=1.5ex]{phase\i}.south west);
+    }
+  \end{scope}
 \end{tikzpicture}
 \end{document}
 
