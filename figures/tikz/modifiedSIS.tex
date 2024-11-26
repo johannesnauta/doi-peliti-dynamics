@@ -14,10 +14,10 @@
 
 \begin{tikzpicture}
   \node[inner sep=1ex,anchor=south west] (phi1) at (0,0) {%
-    \includegraphics[width=123pt]{SISorderparameter1.pdf}
+    \includegraphics[width=123pt]{mSISorderparameter1.pdf}
   };  
   \node[anchor=west,inner sep=1ex,xshift=1ex] (phi2) at (phi1.east) {%
-    \includegraphics[width=123pt]{SISorderparameter2.pdf}
+    \includegraphics[width=123pt]{mSISorderparameter2.pdf}
   };
   %~ draw some squares
   \begin{scope}[%
@@ -39,12 +39,12 @@
   \end{scope}
   %~ draw phase plot for 1st order transition
   \node[anchor=south east,inner sep=0pt,yshift=-1ex] (phase1) at (phi1.north east) {%
-    \includegraphics[width=130pt]{SISphaseplotsecondorder.pdf}%
+    \includegraphics[width=130pt]{mSISsecondorder.pdf}%
   };
   
   %~ draw phase plot for 1st order transition
   \node[anchor=south east,inner sep=0pt,yshift=-1ex] (phase2) at (phi2.north east) {%
-    \includegraphics[width=130pt]{SISphaseplotfirstorder.pdf}%
+    \includegraphics[width=130pt]{mSISfirstorder.pdf}%
   };%
   \begin{scope}[every path/.style={very thin, densely dotted}]
     \foreach \i in {1,2} {%

@@ -1,5 +1,6 @@
+#= Module for simulating stochastic dynamics of reduced systems =#
 #/ Start module
-module Dynamics
+module ReDynamics
 
 #/ Packages
 using Catalyst
@@ -12,13 +13,13 @@ using Random
 function define_SIRSrs()
 	  @variables t
     @species S(t) I(t) R(t)
-    @parameters β γ α σ
+    @parameters γ α ρ σ
 
     nreactions = 4
     rxs = Array{Reaction}(undef, nreactions)
 
-    rxs[1] = Reaction(β/(S+I+R), [S, I], [I], [1, 1], [2])
-    rxs[2] = Reaction(γ, [I], [R])
+    rxs[1] = Reaction(γ/(S+I+R), [S, I], [I], [1, 1], [2])
+    rxs[2] = Reaction(ρ, [I], [R])
     rxs[3] = Reaction(α/(S+I+R)^2, [S, I], [I], [1, 2], [3])
     rxs[4] = Reaction(σ, [R], [S])
     @named rs = ReactionSystem(rxs)
@@ -27,8 +28,8 @@ end
 
 function get_SIRSparams(rs::ReactionSystem)
     #/ Get parameters
-    @unpack β, γ, α, σ = rs
-    params = (β => 4/5, α => 1/15, γ => 2/5, σ => 1)
+    @unpack γ, α, ρ, σ = rs
+    params = (γ => 4/5, α => 1/15, ρ => 2/5, σ => 1/10)
     return params
 end
 
@@ -57,11 +58,11 @@ function get_SIRSsde(
 end
 
 function get_reduced_SIRSsde(; X0=[900., 100., 0.], tspan=(0.0, 1000.0))
-    β = 4/5
+    γ = 4/5
     α = 1/15
-    γ = 2/5
+    ρ = 2/5
     σ = 1.0
-    params = (β, α, γ, σ)
+    params = (γ, α, ρ, σ)
     n = sum(X0)
     
     function f(u, p, t)

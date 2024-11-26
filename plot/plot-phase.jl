@@ -130,7 +130,7 @@ function plot_phase_SIR(;
             gridsize=(32,32)
         )
         # / Add trivial zero-energy lines
-        vlines!(ax[i], [1.0], color=:rebeccapurple, linestyle=(:dash,:dense), linewidth=1.2) 
+        vlines!(ax[i], [1.0], color=:black, linewidth=1.2)
         hlines!(ax[i], [0.0], color=:black, linewidth=1.2)
         
         #/ Add non-trivial zero-energy line
@@ -147,7 +147,7 @@ function plot_phase_SIR(;
         ηt = γ[i] < ρ ? [0.5, 1.5] : ((γ[i] == ρ) ? [0.75, 1.5] : [0.7, 1.35])
         plot_arrowfield(ax[i], (x,y)->field(x,y,γ[i]), ηt, zeros(length(ηt)), :black)
         θt = γ[i] < ρ ? [-0.2, 0.5] : ((γ[i] == ρ) ? [-0.3, 0.5] : [-0.3, 0.35])
-        plot_arrowfield(ax[i], (x,y)->field(x,y,γ[i]), ones(length(θt)), θt, :rebeccapurple)
+        plot_arrowfield(ax[i], (x,y)->field(x,y,γ[i]), ones(length(θt)), θt, :black)
         #~ field on non-trivial zero-energy line(s)
         if γ[i] < ρ
             ηnt = [0.65]
@@ -228,7 +228,7 @@ function plot_phase_SIS(; N::Float64=1.0, ρ::Float64=1.0, γ = [2.0/3.0,1.0,2.0
 
     ax = [Axis(
         fig[1,i],
-        title=axtitles[i], titlesize=11,
+        title=axtitles[i], titlesize=10,
         xlabel=L"\eta", xlabelpadding=0.0,
         ylabel=L"\theta", ylabelpadding=0.0,
         aspect=1,
@@ -266,7 +266,7 @@ function plot_phase_SIS(; N::Float64=1.0, ρ::Float64=1.0, γ = [2.0/3.0,1.0,2.0
             gridsize=(32,32)
         )
         # / Add trivial zero-energy lines
-        vlines!(ax[i], [1.0], color=:rebeccapurple, linestyle=(:dash,:dense), linewidth=1.2) 
+        vlines!(ax[i], [1.0], color=:black, linewidth=1.2) 
         hlines!(ax[i], [0.0], color=:black, linewidth=1.2)
         
         #/ Add non-trivial zero-energy line        
@@ -282,14 +282,13 @@ function plot_phase_SIS(; N::Float64=1.0, ρ::Float64=1.0, γ = [2.0/3.0,1.0,2.0
         ηt = γ[i] == ρ ? [0.5, 1.5] : ((γ[i] < ρ) ? [0.5, 1.25] : [0.75, 1.5])
         plot_arrowfield(ax[i], _f, ηt, zeros(length(ηt)), :black)
         θt = γ[i] ≤ ρ ? [-0.25, 0.5] : [-0.25, 0.25]
-        plot_arrowfield(ax[i], _f, ones(length(θt)), θt, :rebeccapurple)
+        plot_arrowfield(ax[i], _f, ones(length(θt)), θt, :black)
         ηnt = γ[i] < ρ ? [1.25, 1.75] : [0.7, 1.3]
         plot_arrowfield(ax[i], _f, ηnt, θf.(ηnt), :rebeccapurple)
         
         #/ Scatter fixed points        
         if i == 1
             #~ fixed point F below critical transition
-            @info "hm" log(γ[i]/ρ)
             F = [[1.0, 1.0, ρ*N/γ[i]], [0.0, θf(1.0), 0.0]]
             markers = [:star5, :circle, :circle]
             markersize = [9, 6, 6]
@@ -302,11 +301,11 @@ function plot_phase_SIS(; N::Float64=1.0, ρ::Float64=1.0, γ = [2.0/3.0,1.0,2.0
             colors = [:white]
             strokecolors = [:firebrick2]
         else
-            F = [[ρ*N/γ[i], 1.0], [0.0, 0.0]]            
-            markers = [:star5, :circle]
-            markersize = [9, 6]
-            colors = [:white, :mediumpurple1]
-            strokecolors = [:firebrick2, :rebeccapurple]
+            F = [[ρ*N/γ[i], 1.0, 1.0], [0.0, 0.0, θf(1.0)]]
+            markers = [:star5, :circle, :circle]
+            markersize = [9, 6, 6]
+            colors = [:white, :mediumpurple1, :mediumpurple]
+            strokecolors = [:firebrick2, :rebeccapurple, :rebeccapurple]
         end
             
             
@@ -416,7 +415,7 @@ function plot_illustrative(
         band!(axes[i], [1,2], [-0.5,-0.5], [1.0,1.0], color=(:red, 0.2))
 
         # / Add trivial zero-energy lines
-        vlines!(axes[i], [1.0], color=:rebeccapurple, linestyle=(:dash,:dense), linewidth=1.2) 
+        vlines!(axes[i], [1.0], color=:black, linewidth=1.2) 
         hlines!(axes[i], [0.0], color=:black, linewidth=1.2)
         
         #/ Add non-trivial zero-energy line
@@ -433,7 +432,7 @@ function plot_illustrative(
         ηt = α[i] < ρ ? [0.5, 1.5] : [0.75, 1.5]
         plot_arrowfield(axes[i], (x,y)->field(x,y,α[i]), ηt, zeros(length(ηt)), :black)
         θt = γ < ρ ? [-0.2, 0.5] : ((γ == ρ) ? [-0.3, 0.5] : [-0.3, 0.35])
-        plot_arrowfield(axes[i], (x,y)->field(x,y,α[i]), ones(length(θt)), θt, :rebeccapurple)
+        plot_arrowfield(axes[i], (x,y)->field(x,y,α[i]), ones(length(θt)), θt, :black)
         #~ field on non-trivial zero-energy line(s)
         ηnt = [0.3, 0.75, (1.0+ηmax)/2]
         θnt = θf.(ηnt)
@@ -471,7 +470,7 @@ function plot_illustrative(
                 strokewidth=.9, strokecolor=strokecolors[end]
             )
             legend = Legend(
-                fig[0,1], [s1, s2], labels, labelsize=8,
+                fig[0,1], [s1, s2], labels, labelsize=8, nbanks=2,
                 framevisible=false, padding=3, rowgap=0, patchsize=(3,3)
             )
         end
@@ -548,6 +547,112 @@ function plot_illustrative(
     return fig 
 end
 
+"Plot spatially extended predator-prey model (Lotka-Volterra)"
+function plot_phase_LV(; D=[0.4,0.8], c=1.0, k=0.4, ε=0.2, N=1.0)
+    #/ Define figure
+    width = .8*246
+    fig = Figure(;
+        size=(width,width/1.67), figure_padding=(1,2,2,1),
+        backgroundcolor=:transparent
+    )
+    #/ Define axes
+    axtitles = [L"D = D_1", L"D = D_2"]
+    ax = [Axis(
+        fig[1,i],
+        title = axtitles[i], titlesize=10, titlegap=1,
+        xlabel=L"\eta", xlabelpadding=0.0,
+        ylabel=L"\theta", ylabelpadding=0.0,
+        aspect=1,
+        xlabelsize=12, ylabelsize=12, ylabelvisible=(i==1),
+        xticks = [0.0, 1.0, 2.0], xticksize=2,
+        xminorticksvisible=true, xminorticks=IntervalsBetween(2), xminorticksize=1,
+        yticks=[-0.5, 0.0, 0.5], yticksize=2,
+        xticklabelsize=7, yticklabelsize=7, yticklabelsvisible=(i==1),
+        xgridvisible=false, ygridvisible=false,
+        limits=(-.5,1.5,-.5,.5),
+    ) for i in 1:2]
+
+    #~ Specify critical points
+    D1 = N - ε - ε/k
+    D2 = N - ε/c
+    @info "D" D1 D2
+
+    for (i,d) in enumerate(D)
+        #/ Add non-physical band(s)
+        band!(ax[i], [1,2], [-0.5,-0.5], [1.0,1.0], color=(:red, 0.2))
+        band!(ax[i], [-.5,0.], [-0.5,-0.5], [0.5,0.5], color=(:red, 0.2))
+        #/ Add streamplot 
+        #~ Specify the field (derived symbolically, see symbolics/LV.jl)
+        field(η,θ) = d ≤ D1 ?
+                     (
+                         (c*exp(θ)*ε*η - c*exp(-θ)*ε*η - k*exp(θ)*ε*η -
+                          d*c*k*exp(θ)*η + N*c*k*exp(θ)*η - c*k*exp(θ)*(η^2)) / c,
+                         (c*ε - k*ε - d*c*k + N*c*k - 2c*k*η - c*exp(θ)*ε - c*exp(-θ)*ε
+                          + k*exp(θ)*ε + d*c*k*exp(θ) - N*c*k*exp(θ) + 2c*k*exp(θ)*η +
+                          c*exp(θ)*exp(-θ)*ε) / c) :
+                     (
+                         -((d - N + η)*c + exp(-θ)*ε)*exp(θ)*η + (1 - exp(θ))*exp(-θ)*ε*η,
+                         ((d - N + η)*c + exp(-θ)*ε)*(1 - exp(θ)) + c*(1 - exp(θ))*η
+                     )
+        f(η,θ) = Point2f(field(η,θ))
+        sp = streamplot!(
+            ax[i], f,
+            -0.5..1.5, -0.5..0.5, color= x -> :gray, alpha=.8,
+            arrow_size=4., linewidth=.3,
+            density=.5, maxsteps=512, stepsize=0.001,
+            gridsize=(32,32)
+        )
+
+        #/ Add trivial zero-energy lines
+        vlines!(ax[i], [0.0], color=:black, linewidth=1.0) 
+        hlines!(ax[i], [0.0], color=:black, linewidth=1.0)
+        #/ Add non-trivial zero-energy line
+        θf(η) = d ≤ D1 ?
+               -log(N - k/c + k/ε*(N-d-η)) :
+               -log(c/ε * (N-d-η))
+        θf_incorrect(η) = d ≤ D1 ?
+               -log(c/ε * (N-d-η)) :
+               -log(N - k/c + k/ε*(N-d-η))
+        ηmax = d ≤ D1 ? N - d : 0.1 #N - d - ε/c + N*ε/k
+        # ηmax_incorrect = d < D1 ? 0.5 : 0.5
+        # ηmin_incorrect = d < D1 ? 0.4 : -0.375
+        # ηplot_incorrect = ηmin_incorrect:0.01:ηmax_incorrect
+        # lines!(
+        #     ax[i], ηplot_incorrect, θf_incorrect.(ηplot_incorrect),
+        #     color=:black, linewidth=.8, linestyle=(:dot,:dense)
+        # )        
+        ηplot = -0.2:0.01:ηmax
+        lines!(
+            ax[i], ηplot, θf.(ηplot),
+            color=:rebeccapurple, linewidth=1.2, linestyle=(:dash,:dense)
+        )
+        # ηplot = -0.5:0.01:0.5
+
+        F = [[0.0, N - d - ε/c], [0.0,0.0]]
+        markers = [:circle, :star5]
+        markersize = [6,9]
+        colors = [:mediumpurple1, :white]
+        strokecolors = [:rebeccapurple, :firebrick2]
+        s = scatter!(
+            ax[i], F[begin], F[end], marker=markers, markersize=markersize,
+            color=colors, strokewidth=.9, strokecolor=strokecolors
+        )
+        #/ Add arrows
+        #~ field on trivial zero-energy lines with θ=0
+        ηt = d ≤ D1 ? [-0.25,0.25,1.0] : [-0.25, 0.5]
+        plot_arrowfield(ax[i], (x,y)->field(x,y), ηt, zeros(length(ηt)), :black)
+        θt = [-0.25, 0.25]
+        plot_arrowfield(ax[i], (x,y)->field(x,y), 0.0.*ones(length(θt)), θt, :black)
+        ηnt = d ≤ D1 ? [0.3, 0.65] : [-0.1, 0.055]
+        θnt = θf.(ηnt)
+        plot_arrowfield(ax[i], (x,y)->field(x,y), ηnt, θnt, :rebeccapurple)
+    end
+
+    #~ Reduce some white-space
+    colgap!(fig.layout, 6)
+    resize_to_layout!(fig)
+    return fig 
+end
 
 end # module PhasePlotter
 #/ End module
