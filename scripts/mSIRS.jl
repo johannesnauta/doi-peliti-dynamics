@@ -1,5 +1,7 @@
 #= Module for simulating dynamics of modified SIRS model
  * includes functions that numerically integrate the reduced dynamics
+ * if not specified, closed-form derivations of the reduced dynamics have been
+   performed using Mathematica
 =#
 #/ Start module
 module SIRSReDynamics
@@ -8,16 +10,32 @@ module SIRSReDynamics
 using Catalyst
 using DifferentialEquations
 using FHist
+using JLD2
 using ModelingToolkit
 using ModelingToolkit: t_nounits as t, D_nounits as D
 
 #################
 ### FUNCTIONS ###
+function solve_SIR(; N=1e4, γ=1.0, α=0.2, ρ=0.4, σ=1.0, tspan=(0.0,1e5))
+    rn = get_ReactionSystem()
+    umap = (:S => 0.95*N, :I => 0.02*N, :R => 0.03*N)
+    pmap = (:γ => γ/N, :α => α/N^2, :ρ => ρ, :σ => σ)
+    sprob = SDEProblem(rn, umap, tspan, pmap)
+    ssol = solve_SDE(sprob, dt=1e-2)
+    return ssol
+end
+
+function solve_rSIR(; N=1e4, γ=1.0, α=0.2, ρ=0.4, σ=1.0, tspan=(0.0,1e5))
+    rsprob = get_rSDEProblem(; N=N, γ=γ, α=α, ρ=ρ, σ=σ, tspan=tspan)
+    rssol = solve_SDE(rsprob, dt=1e-2)
+    return rssol
+end 
+
 "Catalyst ReactionSystem"
 function get_ReactionSystem()
     rn = @reaction_network begin
         γ, S + I --> 2I
-        α, S + 2I --> 3I
+        α*I, S + I --> 2I
         ρ, I --> R
         σ, R --> S
     end
@@ -26,7 +44,7 @@ end
 
 function get_SDEProblem(
     rs::ReactionSystem;
-    γ=1.0, α=0.4, ρ=0.4, σ=0.1, N=1e3, tspan=(0.0,1e4)
+    γ=1.0, α=0.0, ρ=0.1, σ=0.1, N=1e3, tspan=(0.0,5e2)
     ) 
     u = [0.95*N, 0.05*N, 0.0]
     umap = (:S => u[1], :I => u[2], :R => u[3])
@@ -35,60 +53,43 @@ function get_SDEProblem(
     return sprob
 end
 
-function solve_SDE(sprob::SDEProblem; dt=1e-3)
-    return solve(sprob, EM(), dt=dt)
-end
-
-function get_hist(sol::RODESolution; idx=1, tstart=2e2, bins=2e2:5e0:6e2)
-    #~ Collect data
-    x = reduce(hcat, sol.u)[idx,findfirst(sol.t .> tstart):end]
-    fh = FHist.Hist1D(x; binedges=bins)
-    return fh |> normalize
-end
-
 "Get reduced SDEProblem"
-function get_rSDEProblem(; γ=1.0, α=0.4, ρ=0.4, σ=0.1, N=1e3, tspan=(0.0,1e4))
+function get_rSDEProblem(; γ=0.1, α=0.1, ρ=0.01, σ=0.01, N=1e3, tspan=(0.0,1e4))
     #~ Define reduced SDEProblem
     @variables η(t)
-    eq = [D(η) ~ (σ*(N-η)*(ρ*N^2*(ρ+σ) - N*η*(α*σ + γ*(ρ+σ)) + α*σ*η^2)) / (N^2*(ρ+σ)^2)]
-    neq = [sqrt((σ*(N-η)*(ρ*N^2*(ρ+σ) + N*η*(α*σ + γ*(ρ+σ)) - α*σ*η^2)) / (N^2*(ρ+σ)^2))]
+    eq = [
+        D(η) ~ (N-η)*σ*(α*η^2*σ + N^2*ρ*(ρ+σ) - N*η*(α*σ + γ*(ρ+σ)))/(N^2*(ρ+σ)^2)
+    ]
+    neq = [
+        sqrt((N-η)*σ*(-α*η^2*σ + N^2*ρ*(ρ+σ) + N*η*(α*σ + γ*(ρ+σ)))/(N^2*(ρ+σ)^2))
+    ]    
     @named ode = ODESystem(eq, t)
     @named sde = SDESystem(ode, neq)
     sprob = SDEProblem(complete(sde), [η => 0.95*N], tspan)
     return sprob
 end
 
-"ODESystem of mean-field equations"
-function get_ODESystem()
-    #/ Specify parameters and variables
-    @parameters γ α ρ σ
-    @variables S(t) I(t) R(t)
-    eqns = [
-        D(S) ~ σ*R - γ/(S+I+R)*S*I - α/(S+I+R)^2*S*I^2,
-        D(I) ~ γ/(S+I+R)*S*I + α/(S+I+R)^2*S*I^2 - ρ*I,
-        D(R) ~ ρ*I - σ*R
-    ]
-    @named sys = ODESystem(eqns, t, [S,I,R], [γ,α,ρ,σ])
-    return complete(sys)
+"Solve a given SDEProblem with EM() algorithm and some dt"
+function solve_SDE(sprob::SDEProblem; dt=1e-3) 
+    return solve(sprob, EM(), dt=dt)
 end
 
-"SDESystem of ODESystem, with noise strength ξv"
-function get_SDESystem(sys::ODESystem; ξv = 0.1)
-    noiseqns = [ξv*sqrt(sys.S*sys.I), -ξv*sqrt(sys.S*sys.I), 0]
-    @named sde = SDESystem(sys, noiseqns)
-    return complete(sde)
+"Extract histograms on the distribution of the steady state"
+function get_hist(sol::RODESolution; idx=1, tstart=2e2, bins=3e3:1e1:4.5e3)
+    #~ Collect data
+    # N = sum(sol.u[begin])
+    x = reduce(hcat, sol.u)[idx,findfirst(sol.t .> tstart):end]
+    fh = FHist.Hist1D(x; binedges=bins)
+    return fh |> normalize
 end
 
-"SDEProblem from SDESystem"
-function get_SDEProblem(sys::SDESystem; γ=1.0, α=0.0, ρ=0.5, σ=0.1, N=1e3, tspan=(0.0,1e4))
-    pmap = (sys.γ => γ, sys.α => α, sys.ρ => ρ, sys.σ => σ)
-    u = [N / 2, N / 3]
-    append!(u, N - sum(u))
-    umap = (sys.S => u[1], sys.I => u[2], sys.R => u[3])
-    prob = SDEProblem(sys, umap, tspan, pmap)
-    return prob
+function store_hist(fh::FHist.Hist1D, fname::String)
+    #~ Extract path from filename, and make sure it exists
+    _path = rsplit(fname, "/", limit=2)
+    mkpath(_path[begin])
+    #~ Save 
+    jldsave(fname; histogram = fh)
 end
-
 
 end # module SIRSReDynamics
 #/ End module

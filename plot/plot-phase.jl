@@ -1,6 +1,7 @@
 #/ Start module
 module PhasePlotter
 
+#/ Packages
 using CairoMakie
 using LaTeXStrings
 
