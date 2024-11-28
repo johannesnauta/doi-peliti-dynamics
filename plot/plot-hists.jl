@@ -18,6 +18,7 @@ function plot_rhists(
     ;
     hfname = "../data/pdfs/pdf_rSIRS.jld2",
     width = .7*246,
+    norm = 1e2,
     overlay = true,
     savefig = false,
     figname = nothing 
@@ -35,7 +36,7 @@ function plot_rhists(
         xminorticksvisible=true, xminorticks=IntervalsBetween(5),
         yminorticksvisible=true, yminorticks=IntervalsBetween(2),
         xgridvisible=false, ygridvisible=false,
-        limits=(3.0, 4.5, 0.0, 7.0)
+        limits=(7.0, 11.0, 0.0, 2.0)
     )
 
     #/ Load data
@@ -45,7 +46,7 @@ function plot_rhists(
     edges = rfh.binedges[begin].nonuniform_edges
     barpositions = (edges[1:end-1] .+ edges[2:end]) ./ 2
     br = barplot!(
-        barpositions ./ 1e3, rfh.bincounts * 1e3, color=:rebeccapurple, gap=0,
+        barpositions ./ norm, rfh.bincounts * norm, color=:rebeccapurple, gap=0,
         label=L"\textrm{reduced}"
     )
 
@@ -58,8 +59,8 @@ function plot_rhists(
         _edges = rfh.binedges[begin].nonuniform_edges
         stairpositions = (edges[1:end-1] .+ edges[2:end]) ./ 2
         sr = stairs!(
-            stairpositions ./ 1e3, fh.bincounts * 1e3, color=:black, step=:center,
-            linewidth=0.8, label=L"\textrm{full}"
+            stairpositions ./ norm, fh.bincounts * norm, color=:black,
+            step=:center, linewidth=0.8, label=L"\textrm{full}"
         )
         axislegend(
             ax, position=:rt, framevisible=false, labelsize=8.5, patchsize=(4,4),
@@ -69,8 +70,9 @@ function plot_rhists(
 
     #/ Some labels
     Label(fig[1,1,Top()], halign=:left, L"\times 10^{-3}", fontsize=8)
-    Label(fig[1,1,Right()], valign=:bottom, halign=:right, L"\times 10^{3}", fontsize=8)
-
+    Label(fig[1,1,Right()], valign=:bottom, halign=:right, L"\times 10^{%$(Int(log10(norm)))}", fontsize=8)
+    
+    (savefig && !isnothing(figname)) && (save(figname, fig, pt_per_unit=1))
     return fig
 end
 
