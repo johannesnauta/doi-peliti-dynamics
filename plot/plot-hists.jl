@@ -18,7 +18,7 @@ function plot_rhists(
     ;
     hfname = "../data/pdfs/pdf_rSIRS.jld2",
     width = .7*246,
-    norm = 1e2,
+    norm = 1e3,
     overlay = true,
     savefig = false,
     figname = nothing 
@@ -36,7 +36,7 @@ function plot_rhists(
         xminorticksvisible=true, xminorticks=IntervalsBetween(5),
         yminorticksvisible=true, yminorticks=IntervalsBetween(2),
         xgridvisible=false, ygridvisible=false,
-        limits=(7.0, 11.0, 0.0, 2.0)
+        limits=(3, 4.5, 0.0, 7.0)
     )
 
     #/ Load data
