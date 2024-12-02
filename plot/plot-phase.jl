@@ -655,6 +655,110 @@ function plot_phase_LV(; D=[0.4,0.8], c=1.0, k=0.4, ε=0.2, N=1.0)
     return fig 
 end
 
+"Plot phase-plot for tax-evasion model"
+function plot_phase_taxevasion(; N=1.0, α=1.0, β=0.5, δ=0.5)
+    #/ Define figure
+    width = .8*246
+    fig = Figure(;
+        size=(width,width/1.67), figure_padding=(1,2,2,1),
+        backgroundcolor=:transparent
+    )
+    #/ Define axes
+    axtitles = [L"\epsilon < \epsilon_c", L"\epsilon > \epsilon_c"]
+    ax = [Axis(
+        fig[1,i],
+        title = axtitles[i], titlesize=10, titlegap=1,
+        xlabel=L"\eta", xlabelpadding=0.0,
+        ylabel=L"\theta", ylabelpadding=0.0,
+        aspect=1,
+        xlabelsize=12, ylabelsize=12, ylabelvisible=(i==1),
+        xticks = [0.0, 1.0, 2.0], xticksize=2,
+        xminorticksvisible=true, xminorticks=IntervalsBetween(2), xminorticksize=1,
+        yticks=[-0.5, 0.0, 0.5], yticksize=2,
+        xticklabelsize=7, yticklabelsize=7, yticklabelsvisible=(i==1),
+        xgridvisible=false, ygridvisible=false,
+        limits=(0.0,1.5,-1.,1.),
+    ) for i in 1:2]
+
+    #/ Compute εc
+    εc = α*β/δ
+    εv = [εc/3, 3*εc]
+    @info "eps" εc εv
+
+    for (i,ε) in enumerate(εv)    
+        #/ Compute λc, as we want to plot at λ=λc
+        λ = (α + ε)*(β + δ) / α
+    
+        #/ Add non-physical band(s)
+        band!(ax[i], [1,2], [-1.0,-1.0], [1.0,1.0], color=(:red, 0.2))
+        # band!(ax[i], [-.5,0.], [-0.5,-0.5], [0.5,0.5], color=(:red, 0.2))
+        #/ Add streamplot 
+        #~ Specify the field (derived symbolically, see symbolics/LV.jl)
+        field(η,θ) = (
+            ((-exp(θ)*α*β + 2(exp(θ)^2)*α*β + exp(θ)*α*β*η - exp(θ)*α*δ*η - exp(θ)*α*η*λ - exp(θ)*β*ε*η - 2(exp(θ)^2)*α*β*η + 2(exp(θ)^2)*α*δ*η + 2(exp(θ)^2)*β*ε*η + exp(θ)*α*δ*(η^2) + exp(θ)*α*(η^2)*λ + exp(θ)*β*ε*(η^2) + exp(θ)*δ*ε*(η^2) - 2(exp(θ)^2)*α*δ*(η^2) - 2(exp(θ)^2)*β*ε*(η^2) - exp(θ)*δ*ε*(η^3)) / (α + β + δ*η), (-(α^2)*λ - α*β*λ - exp(θ)*(α^2)*β + exp(θ)*(α^2)*δ + exp(θ)*(α^2)*λ - exp(θ)*α*(β^2) + exp(θ)*α*β*ε + exp(θ)*α*β*λ + exp(θ)*(β^2)*ε + (2//1)*(α^2)*η*λ + (2//1)*α*β*η*λ + (2//1)*α*δ*ε*η + (2//1)*β*δ*ε*η + (exp(θ)^2)*(α^2)*β - (exp(θ)^2)*(α^2)*δ + (exp(θ)^2)*α*(β^2) - (exp(θ)^2)*α*β*ε - (exp(θ)^2)*(β^2)*ε - (2//1)*exp(θ)*(α^2)*δ*η - (2//1)*exp(θ)*(α^2)*η*λ - (2//1)*exp(θ)*α*β*δ*η - (2//1)*exp(θ)*α*β*ε*η - (2//1)*exp(θ)*α*β*η*λ - (2//1)*exp(θ)*α*δ*ε*η - (2//1)*exp(θ)*(β^2)*ε*η - (2//1)*exp(θ)*β*δ*ε*η - (3//1)*α*δ*ε*(η^2) + α*δ*(η^2)*λ - (3//1)*β*δ*ε*(η^2) + (δ^2)*ε*(η^2) + (2//1)*(exp(θ)^2)*(α^2)*δ*η + (2//1)*(exp(θ)^2)*α*β*δ*η + (2//1)*(exp(θ)^2)*α*β*ε*η + (2//1)*(exp(θ)^2)*(β^2)*ε*η - exp(θ)*α*(δ^2)*(η^2) + (3//1)*exp(θ)*α*δ*ε*(η^2) - exp(θ)*α*δ*(η^2)*λ + (2//1)*exp(θ)*β*δ*ε*(η^2) - exp(θ)*(δ^2)*ε*(η^2) - (2//1)*(δ^2)*ε*(η^3) + (exp(θ)^2)*α*(δ^2)*(η^2) + (exp(θ)^2)*β*δ*ε*(η^2) + (2//1)*exp(θ)*(δ^2)*ε*(η^3)) / ((α + β + δ*η)^2))
+            )
+        # field(η,θ) = (
+        #     (1 - exp(θ))*exp(θ)*(α*(β + δ*η) + β*ε*η)*(-1 + η) +
+        #     exp(θ)*(-exp(θ)*(α*(β + δ*η) + β*ε*η) - (-α*λ + δ*ε*η)*η)*(-1 + η),
+        #     (-1 + exp(θ))*(-α*λ + exp(θ)*(α*δ + β*ε) + 2δ*ε*η)*(-1 + η) +
+        #     (1 - exp(θ))*(-exp(θ)*(α*(β + δ*η) + β*ε*η) - (-α*λ + δ*ε*η)*η))
+        f(η,θ) = Point2f(field(η,θ))
+        sp = streamplot!(
+            ax[i], f,
+            0.0..1.5, -1.0..1.0, color= x -> :gray, alpha=.8,
+            arrow_size=4., linewidth=.3,
+            density=.5, maxsteps=512, stepsize=0.001,
+            gridsize=(32,32)
+        )
+
+        #/ Add trivial zero-energy lines
+        vlines!(ax[i], [1.0], color=:black, linewidth=1.0) 
+        hlines!(ax[i], [0.0], color=:black, linewidth=1.0)
+        #/ Add non-trivial zero-energy line
+        θf(η) = log( (α*λ*η - δ*ε*η^2) / (α*β + α*δ*η + β*ε*η) )
+        ηmin = 0.0
+        ηmax = 1.5
+        # ηmax = d ≤ D1 ? N - d : 0.1 #N - d - ε/c + N*ε/k
+        # ηmax_incorrect = d < D1 ? 0.5 : 0.5
+        # ηmin_incorrect = d < D1 ? 0.4 : -0.375
+        # ηplot_incorrect = ηmin_incorrect:0.01:ηmax_incorrect
+        # lines!(
+        #     ax[i], ηplot_incorrect, θf_incorrect.(ηplot_incorrect),
+        #     color=:black, linewidth=.8, linestyle=(:dot,:dense)
+        # )        
+        ηplot = ηmin:0.01:ηmax
+        lines!(
+            ax[i], ηplot, θf.(ηplot),
+            color=:rebeccapurple, linewidth=1.2, linestyle=(:dash,:dense)
+        )
+        # ηplot = -0.5:0.01:0.5
+
+        # F = [[0.0, N - d - ε/c], [0.0,0.0]]
+        # markers = [:circle, :star5]
+        # markersize = [6,9]
+        # colors = [:mediumpurple1, :white]
+        # strokecolors = [:rebeccapurple, :firebrick2]
+        # s = scatter!(
+        #     ax[i], F[begin], F[end], marker=markers, markersize=markersize,
+        #     color=colors, strokewidth=.9, strokecolor=strokecolors
+        # )
+        #/ Add arrows
+        #~ field on trivial zero-energy lines with θ=0
+        # ηt = d ≤ D1 ? [-0.25,0.25,1.0] : [-0.25, 0.5]
+        # plot_arrowfield(ax[i], (x,y)->field(x,y), ηt, zeros(length(ηt)), :black)
+        # θt = [-0.25, 0.25]
+        # plot_arrowfield(ax[i], (x,y)->field(x,y), 0.0.*ones(length(θt)), θt, :black)
+        # ηnt = d ≤ D1 ? [0.3, 0.65] : [-0.1, 0.055]
+        # θnt = θf.(ηnt)
+        # plot_arrowfield(ax[i], (x,y)->field(x,y), ηnt, θnt, :rebeccapurple)
+    end
+
+    #~ Reduce some white-space
+    colgap!(fig.layout, 6)
+    resize_to_layout!(fig)
+    return fig 
+end
+
 end # module PhasePlotter
 #/ End module
 
