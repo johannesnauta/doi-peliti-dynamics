@@ -8,7 +8,7 @@ using LaTeXStrings
 #################
 ### FUNCTIONS ###
 "Plot η-value (occupation no.) of global fixed point F vs γ, for both α"
-function plot_occupation(; α=0.5, ρ=1.0, N=1.0)
+function plot_occupation_mSIS(; α=0.5, ρ=1.0, N=1.0)
     #/ Create figures
     width = .8*246
     fig = Figure(
@@ -378,23 +378,26 @@ function plot_illustrative(
 
     #~ order param. plot
     axφ = Axis(
-        fig[2,1], width=100, height=72, limits=(0,2,0,1),
-        xlabel=L"\textrm{control\;param.}\;\gamma", xlabelsize=13,
-        ylabel=L"\textrm{order\;param.}\;\varphi", ylabelsize=13,
+        fig[2,1], width=64, height=64, limits=(0.5,1.5,0,.8),
+        yticks = [0.0,0.8], yminorticks=[0.4], yminorticksvisible=true,
+        xticksize=2, yticksize=2, yminorticksize=1.5,
+        xlabel=L"\textrm{control\;param.}\;\gamma", xlabelsize=10,
+        ylabel=L"$\textrm{order\;param.}$\n$\varphi=1-\eta$", ylabelsize=10,
         xticklabelsvisible=false, yticklabelsvisible=false,
+        xlabelpadding=0, ylabelpadding=0,
         xgridvisible=false, ygridvisible=false
     )
     #~ phase portraits 
     ax2 = Axis(
         fig[3,1], width=64, height=64, limits=(0,2,-0.5,1),        
-        xlabel=L"\eta", ylabel=L"\theta", xlabelsize=11, ylabelsize=11,
+        xlabel=L"\eta", ylabel=L"\theta", xlabelsize=10, ylabelsize=10,
         xlabelpadding=0, ylabelpadding=0,
         xticklabelsvisible=false, yticklabelsvisible=false,
         xticksvisible=false, yticksvisible=false
     )
     ax1 = Axis(
         fig[1,1], width=64, height=64, limits=(0,2,-0.5,1),
-        xlabel=L"\eta", ylabel=L"\theta", xlabelsize=11, ylabelsize=11,
+        xlabel=L"\eta", ylabel=L"\theta", xlabelsize=10, ylabelsize=10,
         xlabelpadding=0, ylabelpadding=0,
         # xlabelvisible=false, ylabelvisible=false,
         xticklabelsvisible=false, yticklabelsvisible=false,
@@ -430,7 +433,7 @@ function plot_illustrative(
 
         #/ Add arrows
         #~ field on trivial zero-energy lines with θ=0
-        ηt = α[i] < ρ ? [0.5, 1.5] : [0.75, 1.5]
+        ηt = α[i] < ρ ? [0.5, 1.5] : [0.25, 0.75, 1.5]
         plot_arrowfield(axes[i], (x,y)->field(x,y,α[i]), ηt, zeros(length(ηt)), :black)
         θt = γ < ρ ? [-0.2, 0.5] : ((γ == ρ) ? [-0.3, 0.5] : [-0.3, 0.35])
         plot_arrowfield(axes[i], (x,y)->field(x,y,α[i]), ones(length(θt)), θt, :black)
@@ -522,23 +525,23 @@ function plot_illustrative(
         #~ if 1st order transition, identify it more clearly    
         if α[i] > ρ
             vlines!(
-                axφ, [1.0], ymin=0.0, ymax=ϕ(γv[begin]), color=:gray,
-                linewidth=1., linestyle=:dot
+                axφ, [1.0], ymin=0.0, ymax=0.6, color=:gray,
+                linewidth=1., linestyle=(:dot,:dense)
             )
         end
-        x = (α[i] > ρ) ? 1.2 : 1.2
-        y = (α[i] > ρ) ? 0.3 : 0.6
-        rotation = (α[i] > ρ) ? π/6 : π/12
+        x = (α[i] > ρ) ? 1.1 : 1.075
+        y = (α[i] > ρ) ? 0.205 : 0.57
+        rotation = (α[i] > ρ) ? π/5 : π/12
         text!(
             axφ, x, y, text=textlabels[mod1(i+1,2)], align=(:left,:bottom), fontsize=7,
             color=:black, rotation=rotation
         )
     end
     
-    axislegend(
-        axφ, position=:lt, labelsize=9, framevisible=false, rowgap=0,
-        patchsize=(10,1), padding=0
-    )
+    # axislegend(
+    #     axφ, position=:lt, labelsize=9, framevisible=false, rowgap=0,
+    #     patchsize=(10,1), padding=0
+    # )
 
     
     
@@ -683,7 +686,6 @@ function plot_phase_taxevasion(; N=1.0, α=1.0, β=0.5, δ=0.5)
     #/ Compute εc
     εc = α*β/δ
     εv = [εc/3, 3*εc]
-    @info "eps" εc εv
 
     for (i,ε) in enumerate(εv)    
         #/ Compute λc, as we want to plot at λ=λc
@@ -691,17 +693,12 @@ function plot_phase_taxevasion(; N=1.0, α=1.0, β=0.5, δ=0.5)
     
         #/ Add non-physical band(s)
         band!(ax[i], [1,2], [-1.0,-1.0], [1.0,1.0], color=(:red, 0.2))
-        # band!(ax[i], [-.5,0.], [-0.5,-0.5], [0.5,0.5], color=(:red, 0.2))
         #/ Add streamplot 
-        #~ Specify the field (derived symbolically, see symbolics/LV.jl)
+        #~ Specify the field (derived symbolically, see symbolics/tax-evasion.jl)
         field(η,θ) = (
-            ((-exp(θ)*α*β + 2(exp(θ)^2)*α*β + exp(θ)*α*β*η - exp(θ)*α*δ*η - exp(θ)*α*η*λ - exp(θ)*β*ε*η - 2(exp(θ)^2)*α*β*η + 2(exp(θ)^2)*α*δ*η + 2(exp(θ)^2)*β*ε*η + exp(θ)*α*δ*(η^2) + exp(θ)*α*(η^2)*λ + exp(θ)*β*ε*(η^2) + exp(θ)*δ*ε*(η^2) - 2(exp(θ)^2)*α*δ*(η^2) - 2(exp(θ)^2)*β*ε*(η^2) - exp(θ)*δ*ε*(η^3)) / (α + β + δ*η), (-(α^2)*λ - α*β*λ - exp(θ)*(α^2)*β + exp(θ)*(α^2)*δ + exp(θ)*(α^2)*λ - exp(θ)*α*(β^2) + exp(θ)*α*β*ε + exp(θ)*α*β*λ + exp(θ)*(β^2)*ε + (2//1)*(α^2)*η*λ + (2//1)*α*β*η*λ + (2//1)*α*δ*ε*η + (2//1)*β*δ*ε*η + (exp(θ)^2)*(α^2)*β - (exp(θ)^2)*(α^2)*δ + (exp(θ)^2)*α*(β^2) - (exp(θ)^2)*α*β*ε - (exp(θ)^2)*(β^2)*ε - (2//1)*exp(θ)*(α^2)*δ*η - (2//1)*exp(θ)*(α^2)*η*λ - (2//1)*exp(θ)*α*β*δ*η - (2//1)*exp(θ)*α*β*ε*η - (2//1)*exp(θ)*α*β*η*λ - (2//1)*exp(θ)*α*δ*ε*η - (2//1)*exp(θ)*(β^2)*ε*η - (2//1)*exp(θ)*β*δ*ε*η - (3//1)*α*δ*ε*(η^2) + α*δ*(η^2)*λ - (3//1)*β*δ*ε*(η^2) + (δ^2)*ε*(η^2) + (2//1)*(exp(θ)^2)*(α^2)*δ*η + (2//1)*(exp(θ)^2)*α*β*δ*η + (2//1)*(exp(θ)^2)*α*β*ε*η + (2//1)*(exp(θ)^2)*(β^2)*ε*η - exp(θ)*α*(δ^2)*(η^2) + (3//1)*exp(θ)*α*δ*ε*(η^2) - exp(θ)*α*δ*(η^2)*λ + (2//1)*exp(θ)*β*δ*ε*(η^2) - exp(θ)*(δ^2)*ε*(η^2) - (2//1)*(δ^2)*ε*(η^3) + (exp(θ)^2)*α*(δ^2)*(η^2) + (exp(θ)^2)*β*δ*ε*(η^2) + (2//1)*exp(θ)*(δ^2)*ε*(η^3)) / ((α + β + δ*η)^2))
-            )
-        # field(η,θ) = (
-        #     (1 - exp(θ))*exp(θ)*(α*(β + δ*η) + β*ε*η)*(-1 + η) +
-        #     exp(θ)*(-exp(θ)*(α*(β + δ*η) + β*ε*η) - (-α*λ + δ*ε*η)*η)*(-1 + η),
-        #     (-1 + exp(θ))*(-α*λ + exp(θ)*(α*δ + β*ε) + 2δ*ε*η)*(-1 + η) +
-        #     (1 - exp(θ))*(-exp(θ)*(α*(β + δ*η) + β*ε*η) - (-α*λ + δ*ε*η)*η))
+            ((-exp(θ)*(α^2)*η*λ - exp(θ)*α*β*δ*η - exp(θ)*α*β*η*λ + (exp(θ)^3)*(α^2)*β + (exp(θ)^3)*α*(β^2) + (2//1)*(exp(θ)^2)*α*β*δ*η + exp(θ)*(α^2)*(η^2)*λ + exp(θ)*α*β*δ*(η^2) + exp(θ)*α*β*(η^2)*λ - exp(θ)*α*(δ^2)*(η^2) + exp(θ)*α*δ*ε*(η^2) - exp(θ)*α*δ*(η^2)*λ - (exp(θ)^3)*(α^2)*β*η + (exp(θ)^3)*(α^2)*δ*η - (exp(θ)^3)*α*(β^2)*η + (exp(θ)^3)*α*β*δ*η + (exp(θ)^3)*α*β*ε*η + (exp(θ)^3)*(β^2)*ε*η - (2//1)*(exp(θ)^2)*α*β*δ*(η^2) + (2//1)*(exp(θ)^2)*α*(δ^2)*(η^2) + (2//1)*(exp(θ)^2)*β*δ*ε*(η^2) + exp(θ)*α*(δ^2)*(η^3) - exp(θ)*α*δ*ε*(η^3) + exp(θ)*α*δ*(η^3)*λ + exp(θ)*(δ^2)*ε*(η^3) - (exp(θ)^3)*(α^2)*δ*(η^2) - (exp(θ)^3)*α*β*δ*(η^2) - (exp(θ)^3)*α*β*ε*(η^2) - (exp(θ)^3)*(β^2)*ε*(η^2) - (2//1)*(exp(θ)^2)*α*(δ^2)*(η^3) - (2//1)*(exp(θ)^2)*β*δ*ε*(η^3) - exp(θ)*(δ^2)*ε*(η^4)) / ((exp(θ)*α + exp(θ)*β + δ*η)^2),
+             (-exp(θ)*(α^2)*λ - exp(θ)*α*β*δ - exp(θ)*α*β*λ - (exp(θ)^2)*(α^2)*β + (exp(θ)^2)*(α^2)*δ + (exp(θ)^2)*(α^2)*λ - (exp(θ)^2)*α*(β^2) + (2//1)*(exp(θ)^2)*α*β*δ + (exp(θ)^2)*α*β*ε + (exp(θ)^2)*α*β*λ + (exp(θ)^2)*(β^2)*ε + (2//1)*exp(θ)*(α^2)*η*λ + (2//1)*exp(θ)*α*β*η*λ + (2//1)*exp(θ)*α*δ*ε*η + (2//1)*exp(θ)*β*δ*ε*η + α*δ*(η^2)*λ + (δ^2)*ε*(η^2) + (exp(θ)^3)*(α^2)*β - (exp(θ)^3)*(α^2)*δ + (exp(θ)^3)*α*(β^2) - (exp(θ)^3)*α*β*δ - (exp(θ)^3)*α*β*ε - (exp(θ)^3)*(β^2)*ε - (2//1)*(exp(θ)^2)*(α^2)*δ*η - (2//1)*(exp(θ)^2)*(α^2)*η*λ - (2//1)*(exp(θ)^2)*α*β*δ*η - (2//1)*(exp(θ)^2)*α*β*ε*η - (2//1)*(exp(θ)^2)*α*β*η*λ - (2//1)*(exp(θ)^2)*α*δ*ε*η - (2//1)*(exp(θ)^2)*(β^2)*ε*η - (2//1)*(exp(θ)^2)*β*δ*ε*η - exp(θ)*α*(δ^2)*(η^2) - (3//1)*exp(θ)*α*δ*ε*(η^2) - exp(θ)*α*δ*(η^2)*λ - (4//1)*exp(θ)*β*δ*ε*(η^2) - exp(θ)*(δ^2)*ε*(η^2) - (2//1)*(δ^2)*ε*(η^3) + (2//1)*(exp(θ)^3)*(α^2)*δ*η + (2//1)*(exp(θ)^3)*α*β*δ*η + (2//1)*(exp(θ)^3)*α*β*ε*η + (2//1)*(exp(θ)^3)*(β^2)*ε*η + (exp(θ)^2)*α*(δ^2)*(η^2) + (3//1)*(exp(θ)^2)*α*δ*ε*(η^2) + (4//1)*(exp(θ)^2)*β*δ*ε*(η^2) + (2//1)*exp(θ)*(δ^2)*ε*(η^3)) / ((exp(θ)*α + exp(θ)*β + δ*η)^2))
+        )
         f(η,θ) = Point2f(field(η,θ))
         sp = streamplot!(
             ax[i], f,
@@ -718,44 +715,93 @@ function plot_phase_taxevasion(; N=1.0, α=1.0, β=0.5, δ=0.5)
         θf(η) = log( (α*λ*η - δ*ε*η^2) / (α*β + α*δ*η + β*ε*η) )
         ηmin = 0.0
         ηmax = 1.5
-        # ηmax = d ≤ D1 ? N - d : 0.1 #N - d - ε/c + N*ε/k
-        # ηmax_incorrect = d < D1 ? 0.5 : 0.5
-        # ηmin_incorrect = d < D1 ? 0.4 : -0.375
-        # ηplot_incorrect = ηmin_incorrect:0.01:ηmax_incorrect
-        # lines!(
-        #     ax[i], ηplot_incorrect, θf_incorrect.(ηplot_incorrect),
-        #     color=:black, linewidth=.8, linestyle=(:dot,:dense)
-        # )        
+        
         ηplot = ηmin:0.01:ηmax
         lines!(
             ax[i], ηplot, θf.(ηplot),
             color=:rebeccapurple, linewidth=1.2, linestyle=(:dash,:dense)
         )
-        # ηplot = -0.5:0.01:0.5
-
-        # F = [[0.0, N - d - ε/c], [0.0,0.0]]
-        # markers = [:circle, :star5]
-        # markersize = [6,9]
-        # colors = [:mediumpurple1, :white]
-        # strokecolors = [:rebeccapurple, :firebrick2]
-        # s = scatter!(
-        #     ax[i], F[begin], F[end], marker=markers, markersize=markersize,
-        #     color=colors, strokewidth=.9, strokecolor=strokecolors
-        # )
+        
+        _η = (α*(λ-δ)-β*ε-δ*ε*sqrt(β^2*ε^2 + α^2*(λ-δ)^2 - 2*α*β*ε*(λ+δ))/(δ*ε)) / (2*δ*ε)
+        F = ε<εc ? [[-1.0, 1.0], [-1.0, 0.0]] : [[1.0,_η], [0.0,0.0]]
+        markers = [:circle, :star5]
+        markersize = [6,9]
+        colors = [:mediumpurple1, :white]
+        strokecolors = [:rebeccapurple, :firebrick2]
+        s = scatter!(
+            ax[i], F[begin], F[end], marker=markers, markersize=markersize,
+            color=colors, strokewidth=.9, strokecolor=strokecolors
+        )
         #/ Add arrows
-        #~ field on trivial zero-energy lines with θ=0
-        # ηt = d ≤ D1 ? [-0.25,0.25,1.0] : [-0.25, 0.5]
-        # plot_arrowfield(ax[i], (x,y)->field(x,y), ηt, zeros(length(ηt)), :black)
-        # θt = [-0.25, 0.25]
-        # plot_arrowfield(ax[i], (x,y)->field(x,y), 0.0.*ones(length(θt)), θt, :black)
-        # ηnt = d ≤ D1 ? [0.3, 0.65] : [-0.1, 0.055]
-        # θnt = θf.(ηnt)
-        # plot_arrowfield(ax[i], (x,y)->field(x,y), ηnt, θnt, :rebeccapurple)
+        #~ field on trivial zero-energy lines with θ=0 or η=1
+        ηt = ε < εc ? [0.5,1.25] : [-0.25, 0.6]
+        plot_arrowfield(ax[i], (x,y)->field(x,y), ηt, zeros(length(ηt)), :black)
+        θt = [-0.5, 0.5]
+        plot_arrowfield(ax[i], (x,y)->field(x,y), ones(length(θt)), θt, :black)
+        #~ field on non-trivial zero-energy lines
+        ηnt = ε < εc ? [0.5, 1.35] : [0.1, 0.675, 1.25]
+        θnt = θf.(ηnt)
+        plot_arrowfield(ax[i], (x,y)->field(x,y), ηnt, θnt, :rebeccapurple)
     end
 
     #~ Reduce some white-space
     colgap!(fig.layout, 6)
     resize_to_layout!(fig)
+    return fig 
+end
+
+"Plot η-value (occupation no.) of global fixed point F vs γ, for both α"
+function plot_occupation_taxevasion(; N=1.0, α=1.0, β=0.5, δ=0.5)
+    #/ Create figures
+    width = .8*246
+    fig = Figure(
+        ; size=(width,.6*width), figure_padding=(1,6,1,3),
+        backgroundcolor=:transparent
+    )
+    ax = Axis(
+        fig[1,1],
+        xlabel=L"\lambda",
+        ylabel=L"\varphi",
+        xlabelsize=11, ylabelsize=11,
+        xlabelpadding=1.0, ylabelpadding=3.0,
+        yticks=[0.0, 1.0], xticks=[0.0, 2.0, 4.0],
+        xticklabelsize=8, yticklabelsize=8,
+        xminorticksvisible=true, xminorticks=IntervalsBetween(4),
+        yminorticksvisible=true, yminorticks=IntervalsBetween(4),
+        limits=(0.0, 6.0, 0., 1.01),
+        xgridvisible=false, ygridvisible=false
+    )
+    #/ Define function for the order parameter (from theory, see below)
+    ϕ(λ,ε) = 1 - (α*(λ-δ) - β*ε - δ*ε*sqrt(β^2*ε^2 + α^2*(λ-δ)^2 - 2*α*β*ε*(λ+δ))/(δ*ε)) / (2*δ*ε)
+    #~ specify γ values
+    # αlabel = α < ρ ? L"\alpha < \rho" : L"\alpha > \rho"
+    # color = α < ρ ? :firebrick2 : :firebrick2
+    colors = [:black, :firebrick2]
+    εlabels = [L"\epsilon\;<\;\epsilon_c", L"\epsilon\;>\;\epsilon_c"]
+
+    #/ Plot lines
+    # lines!(ax, vcat(0.0, ρ), vcat(0.0, 0.0), color=color, linewidth=1.2, label=αlabel)
+    εc = α*β/δ
+    εv = [εc/2, 3*εc]
+    for i in eachindex(εv)
+        λc = (α + εv[i])*(β + δ) / α
+        @info λc
+        λv = λc:0.01:6.0
+    
+        lines!(ax, λv, ϕ.(λv,εv[i]), color=colors[i], linewidth=1.2, label=εlabels[i])
+        #~ if 1st order transition, identify it more clearly
+        if εv[i] > εc
+            vlines!(
+                ax, [λc], ymin=0.0, ymax = ϕ(λv[begin], εv[i]), color=colors[i],
+                linewidth=1., linestyle=:dot
+            )
+        end
+    end
+
+    axislegend(
+        ax, position=:lt, labelsize=11, framevisible=false, rowgap=0,
+        patchsize=(5,1), padding=0
+    )
     return fig 
 end
 

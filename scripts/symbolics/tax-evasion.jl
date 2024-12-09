@@ -12,11 +12,11 @@ function getfield()
     @variables η θ
     @variables N λ α β δ ε 
     H = (η - 1) * (1 - exp(θ)) * (exp(θ)*(α*(β+δ*η) + β*ε*η) + η*(δ*ε*η - λ*α)) /
-        ((α + β) + δ*η)
+        (exp(θ)*(α + β) + δ*η)
     ∂η = Differential(η)
     ∂θ = Differential(θ)
     dη = simplify(expand_derivatives(∂θ(H)))
-    dθ = simplify(expand_derivatives(-∂η(H))) 
+    dθ = simplify(expand_derivatives(-∂η(H)))
     return dη, dθ
 end
 
