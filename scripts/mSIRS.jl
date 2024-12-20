@@ -3,6 +3,7 @@
  * if not specified, closed-form derivations of the reduced dynamics have been
    performed using Mathematica
 =#
+
 #/ Start module
 module SIRSReDynamics
 

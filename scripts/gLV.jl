@@ -1,4 +1,4 @@
-#= Module for simulating dynamics of generalized (competitive) Lotka-Volterra model
+q#= Module for simulating dynamics of generalized (competitive) Lotka-Volterra model
  * includes functions that numerically integrate the reduced dynamics
  * if not specified, closed-form derivations of the reduced dynamics have been
    performed using Mathematica
