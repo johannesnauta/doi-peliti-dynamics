@@ -11,20 +11,6 @@ using Random
 using ModelingToolkit
 using ModelingToolkit: t_nounits as t, D_nounits as D
 
-function getfield()
-    #/ Define Hamiltonian
-    @variables η θ
-    @variables N D c k ε
-    # H = η * (1 - exp(θ)) * ( c * (N - D - η) - ε*exp(-θ))
-    H = η * (1 - exp(θ)) * (ε*exp(-θ) - ε - k*(N-D-η-ε/c))
-    # H = exp(-θ)*(1-exp(θ))*ε*η + (exp(θ) - 1)*ε*η + (exp(θ) - 1)*k*(N-D-ε/c-η)*η
-    ∂η = Differential(η)
-    ∂θ = Differential(θ)
-    dη = simplify(expand_derivatives(∂θ(H)))
-    dθ = simplify(expand_derivatives(-∂η(H)))
-    return dη, dθ
-end
-
 function get_driftnoise(S::Int; focal::Int=1, c=min(1.0,0.1))
     rng = Random.Xoshiro(S*1994)
     basesparr = sprand(rng,S,S,c)
