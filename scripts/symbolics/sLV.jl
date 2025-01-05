@@ -8,8 +8,8 @@ using Symbolics
 using SparseArrays
 using Random 
 
-using ModelingToolkit
-using ModelingToolkit: t_nounits as t, D_nounits as D
+# using ModelingToolkit
+# using ModelingToolkit: t_nounits as t, D_nounits as D
 
 function get_reduced_Hamiltonian(; focal::Int=1)
     #~ Define variables 
@@ -50,22 +50,33 @@ function get_reduced_Hamiltonian(; focal::Int=1)
     return Hch
 end
 
-function get_field(H)    
+# function get_field(H)    
+#     @variables η θ
+#     ∂η = Differential(η)
+#     ∂θ = Differential(θ)
+#     dη = simplify(expand_derivatives(∂θ(H)))
+#     dθ = simplify(expand_derivatives(-∂η(H)))
+#     return dη, dθ
+# end
+
+# function get_driftnoise(H)
+#     @variables θ
+#     dθ1 = Differential(θ)^1
+#     dθ2 = Differential(θ)^2
+#     drift = substitute(expand_derivatives(dθ1(H)), Dict(θ => 0))
+#     noise = substitute(expand_derivatives(dθ2(H)), Dict(θ => 0))
+#     return drift, noise
+# end
+
+function get_field()
     @variables η θ
+    @variables ε c k D
+    Hstar = exp(-θ) * (exp(θ) - 1) * η * (ε - c * ((1 - D)*exp(θ) - η))
     ∂η = Differential(η)
     ∂θ = Differential(θ)
-    dη = simplify(expand_derivatives(∂θ(H)))
-    dθ = simplify(expand_derivatives(-∂η(H)))
+    dη = simplify(expand_derivatives(∂θ(Hstar)))
+    dθ = simplify(expand_derivatives(-∂η(Hstar)))
     return dη, dθ
-end
-
-function get_driftnoise(H)
-    @variables θ
-    dθ1 = Differential(θ)^1
-    dθ2 = Differential(θ)^2
-    drift = substitute(expand_derivatives(dθ1(H)), Dict(θ => 0))
-    noise = substitute(expand_derivatives(dθ2(H)), Dict(θ => 0))
-    return drift, noise
 end
 
 

@@ -570,72 +570,46 @@ function plot_phase_sLV(; D=[0.3,0.8], c=1.0, k=0.4, ε=0.2, N=1.0)
         xlabelsize=12, ylabelsize=12, ylabelvisible=(i==1),
         xticks = [0.0, 1.0, 2.0], xticksize=2,
         xminorticksvisible=true, xminorticks=IntervalsBetween(2), xminorticksize=1,
-        yticks=[-0.5, 0.0, 0.5], yticksize=2,
+        yticks=[-1., 0.0, 1.], yticksize=2,
         xticklabelsize=7, yticklabelsize=7, yticklabelsvisible=(i==1),
         xgridvisible=false, ygridvisible=false,
-        limits=(-.5,1.5,-.5,.5),
+        limits=(-.5,1.5,-1.,1.),
     ) for i in 1:2]
 
     #~ Specify critical points
-    D1 = N - ε - ε/k
+    D1 = N - ε/c - ε/k
     D2 = N - ε/c
     @info "D" D1 D2
 
     for (i,d) in enumerate(D)
         #/ Add non-physical band(s)
-        band!(ax[i], [1,2], [-0.5,-0.5], [1.0,1.0], color=(:red, 0.2))
-        band!(ax[i], [-.5,0.], [-0.5,-0.5], [0.5,0.5], color=(:red, 0.2))
+        band!(ax[i], [1,2], [-1.0,-1.0], [1.0,1.0], color=(:red, 0.2))
+        band!(ax[i], [-.5,0.], [-1.0,-1.0], [1.0,1.0], color=(:red, 0.2))
         #/ Add streamplot 
-        #~ Specify the field (derived symbolically, see symbolics/LV.jl)
-        field(η,θ) = d ≤ D1 ?
-                    ((-(N^3)*(ε^3)*η + (N^3)*c*exp(θ)*(ε^2)*η - (N^3)*exp(-θ)*(ε^3)*η - (N^2)*(c^2)*exp(-θ)*ε*(η^2) - (N^2)*c*d*exp(θ)*(ε^2)*η - (N^2)*c*k*exp(-θ)*ε*(η^2) - (2//1)*(N^2)*c*exp(-θ)*(ε^2)*(η^2) + (N^2)*k*exp(-θ)*(ε^2)*(η^2) + N*(c^2)*d*exp(-θ)*ε*(η^2) + N*c*d*k*exp(-θ)*ε*(η^2) + N*c*k*exp(-2θ)*ε*(η^3) + (N^3)*exp(θ)*exp(-θ)*(ε^3)*η + (2//1)*(N^2)*(c^2)*exp(θ)*exp(-θ)*ε*(η^2) - (2//1)*(N^2)*c*k*(exp(-θ)^2)*ε*(η^2) - (2//1)*(N^2)*c*(exp(-θ)^2)*(ε^2)*(η^2) + (2//1)*(N^2)*k*(exp(-θ)^2)*(ε^2)*(η^2) - (2//1)*N*(c^2)*d*exp(θ)*exp(-θ)*ε*(η^2) + N*(c^2)*k*exp(-2θ)*exp(-θ)*(η^3) - N*(c^2)*k*(exp(-θ)^2)*(η^3) - N*(c^2)*(exp(-θ)^2)*ε*(η^3) + (2//1)*N*c*d*k*(exp(-θ)^2)*ε*(η^2) + (2//1)*N*c*k*exp(-2θ)*exp(-θ)*ε*(η^3) + N*c*k*(exp(-θ)^2)*ε*(η^3) - (c^2)*d*k*exp(-2θ)*exp(-θ)*(η^3) + (c^2)*d*k*(exp(-θ)^2)*(η^3) - (c^2)*k*(exp(-2θ)^2)*(η^4) + (c^2)*k*exp(-2θ)*exp(-θ)*(η^4) + (2//1)*(N^2)*c*k*exp(θ)*(exp(-θ)^2)*ε*(η^2) + (2//1)*(N^2)*c*exp(θ)*(exp(-θ)^2)*(ε^2)*(η^2) - (2//1)*(N^2)*k*exp(θ)*(exp(-θ)^2)*(ε^2)*(η^2) - N*(c^2)*k*exp(-2θ)*exp(θ)*exp(-θ)*(η^3) - (2//1)*N*(c^2)*k*(exp(-θ)^3)*(η^3) - N*(c^2)*(exp(-θ)^3)*ε*(η^3) - (2//1)*N*c*d*k*exp(θ)*(exp(-θ)^2)*ε*(η^2) - (2//1)*N*c*k*exp(-2θ)*exp(θ)*exp(-θ)*ε*(η^3) + (2//1)*N*c*k*(exp(-θ)^3)*ε*(η^3) + (c^2)*d*k*exp(-2θ)*exp(θ)*exp(-θ)*(η^3) + (2//1)*(c^2)*d*k*(exp(-θ)^3)*(η^3) + (c^2)*k*(exp(-2θ)^2)*exp(θ)*(η^4) + (3//1)*(c^2)*k*exp(-2θ)*(exp(-θ)^2)*(η^4) + (2//1)*N*(c^2)*k*exp(θ)*(exp(-θ)^3)*(η^3) + N*(c^2)*exp(θ)*(exp(-θ)^3)*ε*(η^3) - (2//1)*N*c*k*exp(θ)*(exp(-θ)^3)*ε*(η^3) - (2//1)*(c^2)*d*k*exp(θ)*(exp(-θ)^3)*(η^3) - (3//1)*(c^2)*k*exp(-2θ)*exp(θ)*(exp(-θ)^2)*(η^4)) / (N*((-N*ε - c*exp(-θ)*η)^2)), ((N^3)*c*(ε^2) - (N^2)*c*d*(ε^2) - (N^3)*c*exp(θ)*(ε^2) - (N^3)*exp(-θ)*(ε^3) + (N^2)*c*d*exp(θ)*(ε^2) + (N^3)*exp(θ)*exp(-θ)*(ε^3) - (2//1)*(N^2)*c*k*(exp(-θ)^2)*ε*η - (2//1)*(N^2)*c*(exp(-θ)^2)*(ε^2)*η + (2//1)*(N^2)*k*(exp(-θ)^2)*(ε^2)*η + N*(c^2)*k*exp(-2θ)*exp(-θ)*(η^2) + (2//1)*N*c*d*k*(exp(-θ)^2)*ε*η + (2//1)*N*c*k*exp(-2θ)*exp(-θ)*ε*(η^2) - (c^2)*d*k*exp(-2θ)*exp(-θ)*(η^2) - (c^2)*k*(exp(-2θ)^2)*(η^3) + (2//1)*(N^2)*c*k*exp(θ)*(exp(-θ)^2)*ε*η + (2//1)*(N^2)*c*exp(θ)*(exp(-θ)^2)*(ε^2)*η - (2//1)*(N^2)*k*exp(θ)*(exp(-θ)^2)*(ε^2)*η - N*(c^2)*k*exp(-2θ)*exp(θ)*exp(-θ)*(η^2) - (2//1)*N*(c^2)*k*(exp(-θ)^3)*(η^2) - N*(c^2)*(exp(-θ)^3)*ε*(η^2) - (2//1)*N*c*d*k*exp(θ)*(exp(-θ)^2)*ε*η - (2//1)*N*c*k*exp(-2θ)*exp(θ)*exp(-θ)*ε*(η^2) + (2//1)*N*c*k*(exp(-θ)^3)*ε*(η^2) + (c^2)*d*k*exp(-2θ)*exp(θ)*exp(-θ)*(η^2) + (2//1)*(c^2)*d*k*(exp(-θ)^3)*(η^2) + (c^2)*k*(exp(-2θ)^2)*exp(θ)*(η^3) + (3//1)*(c^2)*k*exp(-2θ)*(exp(-θ)^2)*(η^3) + (2//1)*N*(c^2)*k*exp(θ)*(exp(-θ)^3)*(η^2) + N*(c^2)*exp(θ)*(exp(-θ)^3)*ε*(η^2) - (2//1)*N*c*k*exp(θ)*(exp(-θ)^3)*ε*(η^2) - (2//1)*(c^2)*d*k*exp(θ)*(exp(-θ)^3)*(η^2) - (3//1)*(c^2)*k*exp(-2θ)*exp(θ)*(exp(-θ)^2)*(η^3)) / (N*((-N*ε - c*exp(-θ)*η)^2))) :
-                     ((-N*ε*η + N*c*exp(θ)*η - N*exp(-θ)*ε*η - c*d*exp(θ)*η - c*exp(-θ)*(η^2) + N*exp(θ)*exp(-θ)*ε*η) / N, (N*c - c*d - N*c*exp(θ) - N*exp(-θ)*ε + c*d*exp(θ) - 2c*exp(-θ)*η + N*exp(θ)*exp(-θ)*ε + 2c*exp(θ)*exp(-θ)*η) / N)
-                     
-                     # (
-                     #     (c*exp(θ)*ε*η - c*exp(-θ)*ε*η - k*exp(θ)*ε*η -
-                     #      d*c*k*exp(θ)*η + N*c*k*exp(θ)*η - c*k*exp(θ)*(η^2)) / c,
-                     #     (c*ε - k*ε - d*c*k + N*c*k - 2c*k*η - c*exp(θ)*ε - c*exp(-θ)*ε
-                     #      + k*exp(θ)*ε + d*c*k*exp(θ) - N*c*k*exp(θ) + 2c*k*exp(θ)*η +
-                     #      c*exp(θ)*exp(-θ)*ε) / c) :
-                     # (
-                     #     -((d - N + η)*c + exp(-θ)*ε)*exp(θ)*η + (1 - exp(θ))*exp(-θ)*ε*η,
-                     #     ((d - N + η)*c + exp(-θ)*ε)*(1 - exp(θ)) + c*(1 - exp(θ))*η
-                     # )
+        field(η,θ) = (
+            -exp(-θ)*η*(ε+c*(-1+d)*exp(2*θ) + η),
+            exp(-θ)*(-1+exp(θ))*(c*(-1+d)*exp(θ) + ε + 2*c*η)
+            )
         f(η,θ) = Point2f(field(η,θ))
         sp = streamplot!(
             ax[i], f,
-            -0.5..1.5, -0.5..0.5, color= x -> :gray, alpha=.8,
+            -0.5..1.5, -1.0..1.0, color= x -> :gray, alpha=.8,
             arrow_size=4., linewidth=.3,
             density=.5, maxsteps=512, stepsize=0.001,
             gridsize=(32,32)
         )
 
         #/ Add trivial zero-energy lines
-        vlines!(ax[i], [0.0], color=:black, linewidth=1.0) 
+        vlines!(ax[i], [0.0], color=:black, linewidth=1.0)
         hlines!(ax[i], [0.0], color=:black, linewidth=1.0)
         #/ Add non-trivial zero-energy line
-        θf(η) = d ≤ D1 ?
-                log(-ε^2 + sqrt(ε^4 - 4*(c*d*ε-c*ε)*(c*k*η-c*d*k*η+c*ε*η-k*ε*η-c*k*η^2)) / (2*(-c*ε + c*d*ε))) :
-               # -log(N - k/c + k/ε*(N-d-η)) :
-               -log(c/ε * (N-d-η))
-        θf_incorrect(η) = d ≤ D1 ?
-               -log(c/ε * (N-d-η)) :
-               -log(N - k/c + k/ε*(N-d-η))
-        ηmax = d ≤ D1 ? N - d : 0.1 #N - d - ε/c + N*ε/k
-        # ηmax_incorrect = d < D1 ? 0.5 : 0.5
-        # ηmin_incorrect = d < D1 ? 0.4 : -0.375
-        # ηplot_incorrect = ηmin_incorrect:0.01:ηmax_incorrect
-        # lines!(
-        #     ax[i], ηplot_incorrect, θf_incorrect.(ηplot_incorrect),
-        #     color=:black, linewidth=.8, linestyle=(:dot,:dense)
-        # )
-        ηplot = -0.2:0.01:ηmax
-        @info "hmm" θf.(ηplot)
+        θf(η) = log((ε + c*η)/(c*(1-d)))
+        ηmax = d ≤ D1 ? 1.5 : 2*ε/c
+        ηplot = -0.15:0.01:ηmax
         lines!(
             ax[i], ηplot, θf.(ηplot),
             color=:rebeccapurple, linewidth=1.2, linestyle=(:dash,:dense)
         )
-        # ηplot = -0.5:0.01:0.5
 
         F = [[0.0, N - d - ε/c], [0.0,0.0]]
         markers = [:circle, :star5]
@@ -650,9 +624,9 @@ function plot_phase_sLV(; D=[0.3,0.8], c=1.0, k=0.4, ε=0.2, N=1.0)
         #~ field on trivial zero-energy lines with θ=0
         ηt = d ≤ D1 ? [-0.25,0.25,1.0] : [-0.25, 0.5]
         plot_arrowfield(ax[i], (x,y)->field(x,y), ηt, zeros(length(ηt)), :black)
-        θt = [-0.25, 0.25]
+        θt = [-0.5, 0.5]
         plot_arrowfield(ax[i], (x,y)->field(x,y), 0.0.*ones(length(θt)), θt, :black)
-        ηnt = d ≤ D1 ? [0.3, 0.65] : [-0.1, 0.055]
+        ηnt = d ≤ D1 ? [0.2, 0.8] : [-0.1, 0.15]
         θnt = θf.(ηnt)
         plot_arrowfield(ax[i], (x,y)->field(x,y), ηnt, θnt, :rebeccapurple)
     end
