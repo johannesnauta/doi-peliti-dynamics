@@ -17,12 +17,20 @@ using ModelingToolkit: t_nounits as t, D_nounits as D
 
 #################
 ### FUNCTIONS ###
-function solve_SIR(; N=1e4, γ=1.0, α=0.2, ρ=0.4, σ=1.0, tspan=(0.0,1e5))
+function solve_SIR(;
+    N=1e4, γ=1.0, α=0.2, ρ=0.4, σ=1.0, dt=1e-2, tspan=(0.0,1e5), meanfield=false
+)
     rn = get_ReactionSystem()
     umap = (:S => 0.95*N, :I => 0.02*N, :R => 0.03*N)
     pmap = (:γ => γ/N, :α => α/N^2, :ρ => ρ, :σ => σ)
     sprob = SDEProblem(rn, umap, tspan, pmap)
-    ssol = solve_SDE(sprob, dt=1e-2)
+    ssol = solve_SDE(sprob, dt=dt)
+    #/ Solve mean-field eqns by solving an ODEProblem as well
+    if meanfield
+        oprob = ODEProblem(rn, umap, tspan, pmap)
+        osol = solve_ODE(oprob)
+        return ssol, osol
+    end
     return ssol
 end
 
@@ -68,6 +76,29 @@ function get_rSDEProblem(; γ=0.1, α=0.1, ρ=0.01, σ=0.01, N=1e3, tspan=(0.0,1
     @named sde = SDESystem(ode, neq)
     sprob = SDEProblem(complete(sde), [η => 0.95*N], tspan)
     return sprob
+end
+
+"Solve trajectories for the full system (stochastic & mean-field) and reduced system"
+function solve_trajectories(; tspan=(0.0, .5e2), dt=1e-2, ddir="../data/trajectories/")
+    ssol, osol = solve_SIR(; tspan=tspan, dt=dt, meanfield=true)
+    rsol = solve_rSIR(; tspan=tspan)
+    #/ Extract trajectories for i=1 (S)
+    xsde = reduce(hcat, ssol.u)[1,:]
+    tsde = ssol.t
+    xode = reduce(hcat, osol.u)[1,:]
+    tode = osol.t
+    xr   = reduce(hcat, rsol.u)[1,:]
+    tr   = rsol.t
+    #~ Save
+    fname = ddir*"mSIRStrajectories.jld2"
+    jldsave(fname; xsde=xsde, tsde=tsde, xode=xode, tode=tode, xr=xr, tr=tr)
+    nothing
+end
+
+
+"Solve a given ODEProblem with Tsit5() algorithm"
+function solve_ODE(prob::ODEProblem)
+    return solve(prob, Tsit5())
 end
 
 "Solve a given SDEProblem with EM() algorithm and some dt"

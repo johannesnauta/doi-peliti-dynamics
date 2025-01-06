@@ -11,10 +11,10 @@ using LaTeXStrings
 #################
 ### FUNCTIONS ###
 """
- Plot histogram of reduced (stochastic) dynamics
+ Plot histogram of reduced (stochastic) dynamics of (modified) SIRS
  If desired, overlays histogram of full (stochastic) dynamics (if it exists)
 """
-function plot_rhists(
+function plot_rhists_mSIRS(
     ;
     hfname = "../data/pdfs/pdf_rSIRS.jld2",
     width = .7*246,

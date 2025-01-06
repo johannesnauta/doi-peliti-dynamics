@@ -17,17 +17,22 @@ using SparseArrays
 
 using ModelingToolkit: t_nounits as t, D_nounits as D
 
+include("../scripts/symbolics/LV.jl")
+using .SymbolicLV
+
 #################
 ### FUNCTIONS ###
 "Solve generalized Lotka-Volterra for S species"
 function solve_gLV(;
-    S::Int = 32,
+    S::Int = 24,
     μA::Float64 = 1.0,
     σA::Float64 = 0.1,
     r = ones(S),
     κ = 1e3 .* ones(S),
     c = 0.1,
-    tspan=(0.0,5e4)
+    dt = 1e-2,
+    tspan = (0.0,1e2),
+    meanfield = false
     )
     sparserng = Random.Xoshiro(S*1994)
     spα = sprand(sparserng,S,S,c)
@@ -44,7 +49,14 @@ function solve_gLV(;
     umap = [rn.x[i] => κ[i] ./ 10 for i in 1:S]
     pmap = [rn.r => r, rn.κ => κ, rn.α => α]
     sprob = SDEProblem(rn, umap, tspan, pmap)
-    ssol = solve_SDE(sprob, dt=1e-2, seed=S*1234)
+    ssol = solve_SDE(sprob, dt=dt, seed=S*42)
+
+    #/ Additionally solve mean-field eq. by solving the ODE
+    if meanfield
+        oprob = ODEProblem(rn, umap, tspan, pmap)
+        osol = solve_ODE(oprob)
+        return ssol, osol
+    end
     return ssol
 end
 
@@ -61,7 +73,7 @@ function get_ReactionSystem(S::Int)
             (j != i) && push!(rxns, Reaction(α[i,j]/κ[i], [x[i], x[j]], [x[j]], [1,1], [1]))
         end
     end
-    @named rs = ReactionSystem(rxns, _t)
+    @named rs = ReactionSystem(rxns, _t, [x...], [r..., κ..., α...])
     return complete(rs)
 end
 
@@ -83,7 +95,7 @@ end
 ### REDUCED DYNAMICS ###
 function solve_rgLV(
     drift, noise;
-    S::Int = 32,
+    S::Int = 24,
     focal::Int = 1,
     μA::Float64 = 1.0,
     σA::Float64 = 0.1,
@@ -95,14 +107,14 @@ function solve_rgLV(
         drift, noise;
         S=S, focal=focal, μA=μA, σA=σA, rv=rv, κv=κv, tspan=tspan
     )
-    ssol = solve_SDE(sprob, dt=1e-2, seed=S*1234)
+    ssol = solve_SDE(sprob, dt=1e-2, seed=S*54321)
     return ssol
 end
 
 function get_rSDEProblem(
     drift, noise
     ;
-    S::Int = 32,
+    S::Int = 24,
     focal::Int = 1,
     μA::Float64 = 1.0,
     σA::Float64 = 0.1,
@@ -162,6 +174,29 @@ end
 
 ########################
 ### HELPER FUNCTIONS ###
+"Solve trajectories for the full system (stochastic & mean-field) and reduced system"
+function solve_trajectories(; S=24, tspan=(0.0, 1e2), dt=1e-2, ddir="../data/trajectories/")
+    ssol, osol = solve_gLV(; S=S, tspan=tspan, dt=dt, meanfield=true)
+    drift, noise = SymbolicLV.get_driftnoise(S, focal=1)
+    rsol = solve_rgLV(drift, noise; S=S, tspan=tspan)
+    #/ Extract trajectories for i=1
+    xsde = reduce(hcat, ssol.u)[1,:]
+    tsde = ssol.t
+    xode = reduce(hcat, osol.u)[1,:]
+    tode = osol.t
+    xr   = reduce(hcat, rsol.u)[1,:]
+    tr   = rsol.t
+    #~ Save
+    fname = ddir*"gLVtrajectories.jld2"
+    jldsave(fname; xsde=xsde, tsde=tsde, xode=xode, tode=tode, xr=xr, tr=tr)
+    nothing
+end
+
+"Solve a given ODEProblem with Tsit5() algorithm"
+function solve_ODE(prob::ODEProblem)
+    return solve(prob, Tsit5())
+end
+    
 "Solve a given SDEProblem with EM() algorithm and some dt"
 function solve_SDE(sprob::SDEProblem; dt=1e-2, seed=42) 
     return solve(sprob, EM(), dt=dt, seed=seed)
