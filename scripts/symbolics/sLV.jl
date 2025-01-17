@@ -13,7 +13,7 @@ using Random
 
 function get_reduced_Hamiltonian(; focal::Int=1)
     #~ Define variables 
-    @parameters c k ε d N
+    @variables c k ε d N
     @variables x[1:3] q[1:3]
 
     #~ Construct Hamiltonian
@@ -28,7 +28,7 @@ function get_reduced_Hamiltonian(; focal::Int=1)
         _dn = simplify(substitute(deriv, subdict))
         dn[i] = _dn ~ 0
     end
-    dn[end] = N - d - q[1] - q[2] - q[3] ~ 0
+    dn[end] = N - d - x[1]*q[1] - x[2]*q[2] - x[3]*q[3] ~ 0
     @info "mean-field eqs" dn
         
     eqs = dn[filter(j->j!=focal, 1:length(dn))]
@@ -43,6 +43,8 @@ function get_reduced_Hamiltonian(; focal::Int=1)
     xdict = Dict(x[j] => 1 for j in 1:length(x) if j!=focal)
     qdict = Dict(vars[i] => qsol[i] for i in eachindex(vars))
     Hred = substitute(H, merge(xdict, qdict))
+    @info "hm" xdict
+    return Hred
 
     #~ Cole-Hopf variables
     @variables η θ
@@ -50,28 +52,27 @@ function get_reduced_Hamiltonian(; focal::Int=1)
     return Hch
 end
 
-# function get_field(H)    
-#     @variables η θ
-#     ∂η = Differential(η)
-#     ∂θ = Differential(θ)
-#     dη = simplify(expand_derivatives(∂θ(H)))
-#     dθ = simplify(expand_derivatives(-∂η(H)))
-#     return dη, dθ
-# end
-
-# function get_driftnoise(H)
-#     @variables θ
-#     dθ1 = Differential(θ)^1
-#     dθ2 = Differential(θ)^2
-#     drift = substitute(expand_derivatives(dθ1(H)), Dict(θ => 0))
-#     noise = substitute(expand_derivatives(dθ2(H)), Dict(θ => 0))
-#     return drift, noise
-# end
-
-function get_field()
+"Define the reduced Hamiltonian obtained from parameterization Λ₂ using Mathematica"
+function define_DPH1()
     @variables η θ
     @variables ε c k D
-    Hstar = exp(-θ) * (exp(θ) - 1) * η * (ε - c * ((1 - D)*exp(θ) - η))
+    Hstar = -exp(-θ)*(-1 + exp(θ)) * η * (ε + c * exp(θ)*(-1 + D + η))
+    return Hstar
+end
+
+"Define the reduced Hamiltonian obtained from parameterization Λ₂ using Mathematica"
+function define_DPH2()
+    @variables η θ
+    @variables ε c k D
+    Hstar = -exp(-θ) * (-1 + exp(θ)) * η / (ε * exp(θ) + c*η) *
+            (c * exp(2*θ) * ε * (-1+D+η) + exp(θ)*ε*(ε-c*η) - η*(-c*ε+k*ε+c*k*(-1+D+η)))
+    return Hstar
+end
+
+
+function get_field(Hstar)
+    @variables η θ
+    @variables ε c k D
     ∂η = Differential(η)
     ∂θ = Differential(θ)
     dη = simplify(expand_derivatives(∂θ(Hstar)))

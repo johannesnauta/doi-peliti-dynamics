@@ -70,6 +70,83 @@ function plot_arrowfield(ax, field, x, y, color)
     end
 end
 
+function plot_phase_mSISinit(; N=1.0, ρ=1.0, α=4.0, γ=0.0)
+    #/ Create figures
+    width = .5*246
+    fig = Figure(
+        ; size=(width,width), figure_padding=(2,6,2,3),
+        backgroundcolor=:transparent
+    )
+    ax = Axis(
+        fig[1,1], aspect=1,
+        xlabel=L"\eta", ylabel=L"\theta", xlabelpadding=0.0, ylabelpadding=0.0,
+        xlabelsize=12, ylabelsize=12,
+        xticks = [0.0, 1.0, 2.0], xticksize=2,
+        xminorticksvisible=true, xminorticks=IntervalsBetween(2), xminorticksize=1,
+        yticks=[-0.5, 0.0, 0.5, 1.0],yticksize=2,
+        xticklabelsize=7, yticklabelsize=7,
+        xgridvisible=false, ygridvisible=false,
+        limits=(-0.25,1.5,-.5,.5)
+    )
+    band!(ax, [1,2], [-1.0,-1.0], [1.0,1.0], color=(:red, 0.2))
+    band!(ax, [-1,0], [-1.0,-1.0], [0.0,1.0], color=(:red, 0.2))
+
+    #/ Define field
+    f(η,θ) = Point2f(
+        (-(N - η)*((N - η)*α + N*γ)*(1 - exp(θ))*exp(-θ)*η) / (N^2) -
+        (N - η)*exp(θ)*((((N - η)*α + N*γ)*exp(-θ)*η) / (N^2) - ρ),
+        (-(N - η)*(((N - η)*α + N*γ)*exp(-θ) - exp(-θ)*α*η)*(1 - exp(θ))) / (N^2) +
+        (1 - exp(θ))*((((N - η)*α + N*γ)*exp(-θ)*η) / (N^2) - ρ)
+    )
+
+    #/ Add streamplot
+    sp = streamplot!(
+        ax, f,
+        -0.25..2.0, -0.5..0.5,
+        color= x -> :gray, alpha=0.8,
+        arrow_size=3.5, linewidth=.3,
+        density=.55, maxsteps=1001, stepsize=0.005,
+        gridsize=(32,32)
+    )
+    
+    # / Add trivial zero-energy lines
+    vlines!(ax, [1.0], color=:black, linewidth=1.2)
+    hlines!(ax, [0.0], color=:black, linewidth=1.2)
+    #/ Add non-trivial zero-energy line
+    ηmax = min(1.0, N*(α+γ)/α - 1e-7)
+    ηplot = 0.0:0.01:ηmax
+    θf(η) = @. log(η*(α*N + γ*N - α*η)/(ρ*N^2))
+    lp = lines!(
+        ax, ηplot, θf(ηplot),
+        color=:rebeccapurple, linewidth=1.2, linestyle=(:dash,:dense)
+    )
+
+    #/ Scatter fixed points
+    F = [[1.0, 0.0], [0.5 - sqrt(1/4 - ρ/α), 0.0], [0.5 + sqrt(1/4 - ρ/α), 0.0]]
+    markers = [:circle, :circle, :circle]
+    markersize = [6, 6, 6]
+    colors = [:mediumpurple1, :mediumpurple1, :mediumpurple1]
+    strokecolors = [:rebeccapurple, :rebeccapurple, :rebeccapurple]
+    for i in eachindex(F)
+        scatter!(
+            ax, F[i][begin], F[i][end], marker=markers[i], markersize=markersize[i],
+            color=colors[i], strokewidth=.9, strokecolor=strokecolors[i]
+        )
+    end
+
+    #/ Plot arrows
+    ηt = [0.2, 0.75, 1.0, 1.0]
+    θt = [0.0, 0.0, 0.25, -0.25]
+    plot_arrowfield(ax, (x,y)->f(x,y), ηt, θt, :black)
+    ηnt = [0.3, 0.7]
+    θnt = θf.(ηnt)
+    plot_arrowfield(ax, (x,y)->f(x,y), ηnt, θnt, :rebeccapurple)
+
+    #/ Resize
+    resize_to_layout!(fig)
+    return fig
+end
+
 function plot_phase_SIR(;
     N::Float64=1.0, ρ::Float64=1.0, α::Float64=2.0, γ=[2.0/3.0,1.0,2.0],
     multiple_figures=false
@@ -215,8 +292,8 @@ end
 
 function plot_phase_SIS(; N::Float64=1.0, ρ::Float64=1.0, γ = [2.0/3.0,1.0,2.0])
     f(η,θ,γ) = Point2f(
-        (N-η) * (γ*η*exp(-θ)/N - ρ*exp(θ)),
-        (1 - exp(θ)) * (γ*exp(-θ) - 2*γ*η/N*exp(-θ) + ρ)
+        ((N^2)*exp(θ)*ρ - N*exp(θ)*η*ρ - N*exp(-θ)*γ*η + exp(-θ)*γ*(η^2)) / N,
+        (-N*ρ + N*exp(θ)*ρ - N*exp(-θ)*γ + (2//1)*exp(-θ)*γ*η + N*exp(θ)*exp(-θ)*γ - (2//1)*exp(θ)*exp(-θ)*γ*η) / N
     )
 
     #/ Initialize figure
@@ -241,15 +318,6 @@ function plot_phase_SIS(; N::Float64=1.0, ρ::Float64=1.0, γ = [2.0/3.0,1.0,2.0
         xgridvisible=false, ygridvisible=false,
         limits=(0,2,-.5,1),
     ) for i in 1:length(γ)]
-    # ax = [Axis(
-    #     fig[1,i], title=axtitles[i], titlesize=11,
-    #     xlabel=L"\eta",
-    #     ylabel=L"\theta", ylabelvisible=(i==1),
-    #     xlabelsize=12, ylabelsize=12,
-    #     xticklabelsize=7, yticklabelsize=7, yticklabelsvisible=(i==1),
-    #     xgridvisible=false, ygridvisible=false,
-    #     limits=(0,2,-0.5,1)
-    # ) for i in 1:length(γ)]
 
     strokecolors = [
         [:firebrick2,:black], [:firebrick2,:firebrick2], [:black,:firebrick2]
@@ -536,15 +604,8 @@ function plot_illustrative(
             axφ, x, y, text=textlabels[mod1(i+1,2)], align=(:left,:bottom), fontsize=7,
             color=:black, rotation=rotation
         )
-    end
-    
-    # axislegend(
-    #     axφ, position=:lt, labelsize=9, framevisible=false, rowgap=0,
-    #     patchsize=(10,1), padding=0
-    # )
-
-    
-    
+    end    
+    #~ Some gaps
     rowgap!(fig.layout, 5)
     rowgap!(fig.layout, 1, 2)
     resize_to_layout!(fig)
@@ -552,15 +613,15 @@ function plot_illustrative(
 end
 
 "Plot spatially extended predator-prey model (Lotka-Volterra)"
-function plot_phase_sLV(; D=[0.3,0.8], c=1.0, k=0.4, ε=0.2, N=1.0)
+function plot_phase_sLV(; Dv=[0.0,0.15, 0.401, 0.65, 0.799], c=1.0, k=0.5, ε=0.2, N=1.0)
     #/ Define figure
     width = .8*246
     fig = Figure(;
-        size=(width,width/1.67), figure_padding=(1,2,2,1),
+        size=(2*width,width/1.67), figure_padding=(1,2,2,1),
         backgroundcolor=:transparent
     )
     #/ Define axes
-    axtitles = [L"D = D_1", L"D = D_2"]
+    axtitles = [L"D=0", L"D < D_1", L"D=D_1", L"D_1 < D < D_2", L"D = D_2"]
     ax = [Axis(
         fig[1,i],
         title = axtitles[i], titlesize=10, titlegap=1,
@@ -570,71 +631,145 @@ function plot_phase_sLV(; D=[0.3,0.8], c=1.0, k=0.4, ε=0.2, N=1.0)
         xlabelsize=12, ylabelsize=12, ylabelvisible=(i==1),
         xticks = [0.0, 1.0, 2.0], xticksize=2,
         xminorticksvisible=true, xminorticks=IntervalsBetween(2), xminorticksize=1,
-        yticks=[-1., 0.0, 1.], yticksize=2,
+        yticks=[-0.5, 0.0, 0.5], yticksize=2,
         xticklabelsize=7, yticklabelsize=7, yticklabelsvisible=(i==1),
         xgridvisible=false, ygridvisible=false,
-        limits=(-.5,1.5,-1.,1.),
-    ) for i in 1:2]
+        limits=(-.1,1.1,-0.5,0.5),
+    ) for i in eachindex(Dv)]
 
     #~ Specify critical points
     D1 = N - ε/c - ε/k
     D2 = N - ε/c
-    @info "D" D1 D2
+    #~ specify what parameterization to use, when Dfocus=D1, use appropriate one,
+    #~ when Dfocus=D2, only use Λ2 unless D>D2
+    Dfocus = D2
 
-    for (i,d) in enumerate(D)
+    for (i,D) in enumerate(Dv)
         #/ Add non-physical band(s)
-        band!(ax[i], [1,2], [-1.0,-1.0], [1.0,1.0], color=(:red, 0.2))
+        band!(ax[i], [1-D,1.5], [-1.0,-1.0], [1.0,1.0], color=(:red, 0.2))
         band!(ax[i], [-.5,0.], [-1.0,-1.0], [1.0,1.0], color=(:red, 0.2))
         #/ Add streamplot 
-        field(η,θ) = (
-            -exp(-θ)*η*(ε+c*(-1+d)*exp(2*θ) + η),
-            exp(-θ)*(-1+exp(θ))*(c*(-1+d)*exp(θ) + ε + 2*c*η)
-            )
+        field = get_sLVfield(D, Dfocus; c=c, k=k, ε=ε, N=N)
         f(η,θ) = Point2f(field(η,θ))
         sp = streamplot!(
             ax[i], f,
-            -0.5..1.5, -1.0..1.0, color= x -> :gray, alpha=.8,
+            -0.5..1.1, -1.0..1.0, color= x -> :gray, alpha=.8,
             arrow_size=4., linewidth=.3,
-            density=.5, maxsteps=512, stepsize=0.001,
+            density=.55, maxsteps=512, stepsize=0.001,
             gridsize=(32,32)
         )
 
         #/ Add trivial zero-energy lines
         vlines!(ax[i], [0.0], color=:black, linewidth=1.0)
         hlines!(ax[i], [0.0], color=:black, linewidth=1.0)
+        label = D < Dfocus ? L"\Lambda_2" : L"\Lambda_1"
         #/ Add non-trivial zero-energy line
-        θf(η) = log((ε + c*η)/(c*(1-d)))
-        ηmax = d ≤ D1 ? 1.5 : 2*ε/c
-        ηplot = -0.15:0.01:ηmax
-        lines!(
-            ax[i], ηplot, θf.(ηplot),
-            color=:rebeccapurple, linewidth=1.2, linestyle=(:dash,:dense)
-        )
+        θf1(η) = D < Dfocus ? log(
+                -(ε^2 - c*ε*η +
+                    sqrt(
+                        (ε^2 - c*ε*η)^2 + 4*c*ε*η*(-1+D+η)*(-c*ε + k*ε + c*k*(-1+D+η))
+                    )
+                ) / (2*c*ε*(-1+D+η))
+            ) : log(-ε / ( c * (-1 + D + η)))
+                 
+        θf2(η) =  D < Dfocus ? log(
+            (-ε^2 + c*ε*η +
+             sqrt(
+                 (ε^2 - c*ε*η)^2 + 4*c*ε*η*(-1+D+η)*(-c*ε + k*ε + c*k*(-1+D+η))
+             )
+            ) / (2*c*ε*(-1+D+η))
+        ) : -Inf
+        Δη = 1e-4
+        for θf in [θf1,θf2]
+            sθf(η) = try θf(η) catch DomainError nothing end        
+            
+            ηplot = -0.5:Δη:1.5
+            θplot = sθf.(ηplot)
+            vidxs = findall(x -> !isnothing(x), θplot)
+            _η = ηplot[vidxs]
+            _θ = θplot[vidxs]
+            #/ Split into contiguous arrays
+            splitidxs = findall(diff(_η) .> 2*Δη)
+            bounds = [1; splitidxs .+ 1; length(ηplot[vidxs]) + 1]
+            _ηplot = [_η[bounds[i]:bounds[i+1]-1] for i in eachindex(bounds[2:end])]
+            _θplot = [_θ[bounds[i]:bounds[i+1]-1] for i in eachindex(bounds[2:end])]
+            for k in eachindex(_ηplot)
+                lines!(
+                    ax[i], _ηplot[k], map(Float64, _θplot[k]),
+                    color=:rebeccapurple, linewidth=1.2, linestyle=(:dash,:dense),
+                    label=label
+                )
+            end
 
-        F = [[0.0, N - d - ε/c], [0.0,0.0]]
-        markers = [:circle, :star5]
-        markersize = [6,9]
-        colors = [:mediumpurple1, :white]
-        strokecolors = [:rebeccapurple, :firebrick2]
-        s = scatter!(
-            ax[i], F[begin], F[end], marker=markers, markersize=markersize,
-            color=colors, strokewidth=.9, strokecolor=strokecolors
-        )
-        #/ Add arrows
-        #~ field on trivial zero-energy lines with θ=0
-        ηt = d ≤ D1 ? [-0.25,0.25,1.0] : [-0.25, 0.5]
-        plot_arrowfield(ax[i], (x,y)->field(x,y), ηt, zeros(length(ηt)), :black)
-        θt = [-0.5, 0.5]
-        plot_arrowfield(ax[i], (x,y)->field(x,y), 0.0.*ones(length(θt)), θt, :black)
-        ηnt = d ≤ D1 ? [0.2, 0.8] : [-0.1, 0.15]
-        θnt = θf.(ηnt)
-        plot_arrowfield(ax[i], (x,y)->field(x,y), ηnt, θnt, :rebeccapurple)
+            F = [[0.0, ε*N/k, N - D - ε*N/c], [0.0,0.0,0.0]]
+            markers = D < D1 ? [:circle, :star5, :circle] : [:circle, :x, :star5]
+            markersize = D < D1 ? [6,9,6] : [6,6.5,9]
+            colors = D < D1 ? [:mediumpurple1, :white, :mediumpurple1] :
+                     [:mediumpurple1, :mediumpurple1, :white]
+            strokecolors = D < D1 ? [:rebeccapurple, :firebrick2, :rebeccapurple] :
+                           [:rebeccapurple, :rebeccapurple, :firebrick2]
+            strokewidth = D < D1 ? [.9, .9, .9] : [.9, .5, .9]
+            s = scatter!(
+                ax[i], F[begin], F[end], marker=markers, markersize=markersize,
+                color=colors, strokewidth=strokewidth, strokecolor=strokecolors
+            )
+            #/ Add arrows
+            #~ field on trivial zero-energy lines with θ=0
+            ηt = D < D1 ? (D == 0 ? [0.16,0.6,0.95] : [0.2,0.5,0.8]) :
+                 (D > D1+1e-1 ? [0.275, 0.65] : [0.15, 0.65])
+            plot_arrowfield(ax[i], (x,y)->field(x,y), ηt, zeros(length(ηt)), :black)
+            θt = D < D1 ? [-0.3, 0.3] : [-0.3, 0.3]
+            plot_arrowfield(ax[i], (x,y)->field(x,y), 0.0.*ones(length(θt)), θt, :black)
+
+            axislegend(
+                ax[i], position=:rt, labelsize=10, padding=1, merge=true, patchsize=(0,0),
+                patchlabelgap=0, margin=(2,2,2,2), framewidth=0.1
+            )
+        end
+
+        #/ Plot arrows on non-trivial zero-energy lines manually
+        if Dfocus == D1
+            ηnt1 = D < D1 ? 
+                (D == 0 ? [0.2, 0.6, 0.95] : [0.2, 0.55, 0.8]) :
+                (abs(D-D1) < 1e-1 ? [0.35, 0.45] :
+                    (abs(D-D2) < 1e-1 ? [-0.04, 0.04] : [0.08, 0.2])
+                )
+        else
+            ηnt1 = D < D1 ?
+                (D == 0 ? [0.2, 0.6, 0.95] : [0.2, 0.55, 0.8]) :
+                (abs(D-D1) < 1e-1 ? [0.15, 0.565] :
+                    (abs(D-D2) < 1e-1 ? [-0.04, 0.04] : [0.08, 0.325, 0.425])
+                )                
+            if D > D2-1e-1
+                ηnt2 = [0.375, 0.5]
+                θnt2 = θf2.(ηnt2)
+                plot_arrowfield(ax[i], (x,y)->field(x,y), ηnt2, θnt2, :rebeccapurple)
+            end
+        end
+        θnt1 = θf1.(ηnt1)
+        plot_arrowfield(ax[i], (x,y)->field(x,y), ηnt1, θnt1, :rebeccapurple)
     end
 
     #~ Reduce some white-space
     colgap!(fig.layout, 6)
     resize_to_layout!(fig)
     return fig 
+end
+
+
+"Specify the field for the spatial Lotka-Volterra model"
+function get_sLVfield(D, D1; c=1.0, k=0.5, ε=0.2, N=1.0)
+    if D > D1
+        return (η,θ) -> (
+        (-1 + D + η)*c*(1 - exp(θ))*η + (-ε + (1 - D - η)*c*exp(θ))*η + (ε - (1 - D - η)*c*exp(θ))*(-1 + exp(θ))*exp(-θ)*η,
+            -c*(1 - exp(θ))*η + (ε - (1 - D - η)*c*exp(θ))*(-1 + exp(θ))*exp(-θ)
+        )
+    else 
+    return (η,θ) -> (
+        (-c*k*ε*(η^2) + c*exp(2θ)*(ε^2)*η - c*(ε^2)*(η^2) + k*(ε^2)*(η^2) - exp(θ)*(ε^3)*η + D*c*k*ε*(η^2) - D*c*exp(2θ)*(ε^2)*η - (c^2)*k*(η^3) + (c^2)*exp(2θ)*ε*(η^2) - (c^2)*ε*(η^3) + (2//1)*c*k*ε*(η^3) - c*exp(2θ)*(ε^2)*(η^2) + D*(c^2)*k*(η^3) - D*(c^2)*exp(2θ)*ε*(η^2) - (c^2)*k*exp(-θ)*(η^3) + (c^2)*k*(η^4) - (c^2)*exp(2θ)*exp(-θ)*ε*(η^2) - (c^2)*exp(2θ)*ε*(η^3) + (c^2)*exp(θ)*ε*(η^3) - (c^2)*exp(-θ)*ε*(η^3) - c*k*exp(θ)*exp(-θ)*ε*(η^2) + c*k*exp(-θ)*ε*(η^3) - c*exp(2θ)*exp(θ)*exp(-θ)*(ε^2)*η - c*exp(θ)*exp(-θ)*(ε^2)*(η^2) + k*exp(θ)*exp(-θ)*(ε^2)*(η^2) + D*(c^2)*k*exp(-θ)*(η^3) + D*(c^2)*exp(2θ)*exp(-θ)*ε*(η^2) + D*c*k*exp(θ)*exp(-θ)*ε*(η^2) + D*c*exp(2θ)*exp(θ)*exp(-θ)*(ε^2)*η + (c^2)*k*exp(θ)*exp(-θ)*(η^3) + (c^2)*k*exp(-θ)*(η^4) + (c^2)*exp(2θ)*exp(θ)*exp(-θ)*ε*(η^2) + (c^2)*exp(2θ)*exp(-θ)*ε*(η^3) + (c^2)*exp(θ)*exp(-θ)*ε*(η^3) + c*k*(exp(θ)^2)*exp(-θ)*ε*(η^2) + c*exp(2θ)*(exp(θ)^2)*exp(-θ)*(ε^2)*η + c*exp(2θ)*exp(θ)*exp(-θ)*(ε^2)*(η^2) + c*(exp(θ)^2)*exp(-θ)*(ε^2)*(η^2) - k*(exp(θ)^2)*exp(-θ)*(ε^2)*(η^2) - D*(c^2)*k*exp(θ)*exp(-θ)*(η^3) - D*(c^2)*exp(2θ)*exp(θ)*exp(-θ)*ε*(η^2) - D*c*k*(exp(θ)^2)*exp(-θ)*ε*(η^2) - D*c*exp(2θ)*(exp(θ)^2)*exp(-θ)*(ε^2)*η - (c^2)*k*exp(θ)*exp(-θ)*(η^4) - (c^2)*exp(2θ)*exp(θ)*exp(-θ)*ε*(η^3) - c*k*(exp(θ)^2)*exp(-θ)*ε*(η^3) - c*exp(2θ)*(exp(θ)^2)*exp(-θ)*(ε^2)*(η^2)) / ((c*η + exp(θ)*ε)^2),
+            (-(c^2)*k*exp(-θ)*(η^2) - (c^2)*exp(-θ)*ε*(η^2) - (2//1)*c*k*exp(θ)*exp(-θ)*ε*η + c*k*exp(-θ)*ε*(η^2) + c*exp(2θ)*exp(θ)*exp(-θ)*(ε^2) - (2//1)*c*exp(θ)*exp(-θ)*(ε^2)*η + (2//1)*k*exp(θ)*exp(-θ)*(ε^2)*η - (exp(θ)^2)*exp(-θ)*(ε^3) + D*(c^2)*k*exp(-θ)*(η^2) + (2//1)*D*c*k*exp(θ)*exp(-θ)*ε*η - D*c*exp(2θ)*exp(θ)*exp(-θ)*(ε^2) + (c^2)*k*exp(θ)*exp(-θ)*(η^2) + (2//1)*(c^2)*k*exp(-θ)*(η^3) - (c^2)*exp(2θ)*exp(-θ)*ε*(η^2) + (2//1)*(c^2)*exp(θ)*exp(-θ)*ε*(η^2) + (2//1)*c*k*(exp(θ)^2)*exp(-θ)*ε*η + (2//1)*c*k*exp(θ)*exp(-θ)*ε*(η^2) - c*exp(2θ)*(exp(θ)^2)*exp(-θ)*(ε^2) - (2//1)*c*exp(2θ)*exp(θ)*exp(-θ)*(ε^2)*η + (4//1)*c*(exp(θ)^2)*exp(-θ)*(ε^2)*η - (2//1)*k*(exp(θ)^2)*exp(-θ)*(ε^2)*η + (exp(θ)^3)*exp(-θ)*(ε^3) - D*(c^2)*k*exp(θ)*exp(-θ)*(η^2) - (2//1)*D*c*k*(exp(θ)^2)*exp(-θ)*ε*η + D*c*exp(2θ)*(exp(θ)^2)*exp(-θ)*(ε^2) - (2//1)*(c^2)*k*exp(θ)*exp(-θ)*(η^3) + (c^2)*exp(2θ)*exp(θ)*exp(-θ)*ε*(η^2) - (c^2)*(exp(θ)^2)*exp(-θ)*ε*(η^2) - (3//1)*c*k*(exp(θ)^2)*exp(-θ)*ε*(η^2) + (2//1)*c*exp(2θ)*(exp(θ)^2)*exp(-θ)*(ε^2)*η - (2//1)*c*(exp(θ)^3)*exp(-θ)*(ε^2)*η) / ((c*η + exp(θ)*ε)^2)
+        )
+    end
 end
 
 "Plot phase-plot for tax-evasion model"

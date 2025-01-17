@@ -7,7 +7,7 @@ using Symbolics
 
 #################
 ### FUNCTIONS ###
-function getfield(; modified=false)
+function get_field(; modified=false)
     (modified) && (return getmodifiedfield())
     #/ Define Hamiltonian
     @variables η θ
@@ -20,7 +20,7 @@ function getfield(; modified=false)
     return dη, dθ
 end
 
-function getmodifiedfield()
+function get_modifiedfield()
     #/ Define Hamiltonian
     @variables η θ
     @variables N γ ρ α
